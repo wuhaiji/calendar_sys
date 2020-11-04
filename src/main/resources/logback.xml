@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <!--logback启动时，会打印它检查了哪些配置、看见了哪些配置，这些信息有时是必须关掉的。将状态信息监听器设置为无操作监听器。-->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <!-- 定义控制台的日志规则 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>
+                %cyan(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %magenta(%logger) - %(%msg%n)
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- 定义文件的日志规则 -->
+    <!-- 按照每天生成日志文件 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <fileNamePattern>logs/ty/platform/%d{yyyy-MM}/%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>
+                %cyan(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %magenta(%logger) - %(%msg%n)
+            </pattern>
+        </encoder>
+    </appender>
+
+
+    <!-- 全局日志输出 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <!-- 开发环境不需要配置错误文件日志信息规则 -->
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

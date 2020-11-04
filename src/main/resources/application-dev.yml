@@ -1,0 +1,37 @@
+server:
+  port: 10000
+  servlet:
+    context-path: /calendar-sys
+
+spring:
+  application:
+    name: calendar_sys
+  jackson:
+    # springboot响应json null值过滤
+    default-property-inclusion: non_null
+  # 数据库
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://192.168.0.108:3306/calendar_sys?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Hongkong
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 3
+      max-active: 10
+      max-wait: 50000
+      keep-alive-between-time-millis: 50000
+      keep-alive: false
+  redis:
+    database: 0
+    host: 192.168.0.108
+    port: 6379
+    timeout: 5000
+    password:
+
+# sql 打印
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
