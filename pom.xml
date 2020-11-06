@@ -19,10 +19,12 @@
         <mysql8.version>8.0.11</mysql8.version>
         <druid.version>1.1.18</druid.version>
         <fastjson.version>1.2.71</fastjson.version>
-        <mybatisplus.version>3.2.0</mybatisplus.version>
+        <mybatisplus.version>3.4.0</mybatisplus.version>
+        <hutool.version>5.4.7</hutool.version>
     </properties>
 
     <dependencies>
+
         <!--web-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -34,18 +36,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <!--配置undertow服务器替换tomcat-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-undertow</artifactId>
-        </dependency>
-
-        <!--开发时热部署，生产环境去掉-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
 
         <!--配置文件辅助-->
@@ -86,18 +81,47 @@
             <artifactId>druid-spring-boot-starter</artifactId>
             <version>${druid.version}</version>
         </dependency>
+
         <!--阿里巴巴 fast json-->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>${fastjson.version}</version>
         </dependency>
+
         <!--mybatis plus-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>${mybatisplus.version}</version>
         </dependency>
+
+        <!-- redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
+        </dependency>
+
+        <!--jwt-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk15to18 -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpg-jdk15to18</artifactId>
+            <version>1.67</version>
+        </dependency>
+
     </dependencies>
 
     <build>
