@@ -20,14 +20,19 @@ public class RSAUtils {
     public static final String PUBLIC_KEY_STR = "publicKey";
     public static final String PRIVATE_KEY_STR = "privateKey";
     private static final int DEFAULT_RSA_KEY_SIZE = 512;
+    public static final String publickey =
+"MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKlMl/ciN+IeMGCE9Rjr7JIrG95Kwb3QGgpbs4xYaOovHPMZ/DoVtezRnR42iYCi4n0UPoORIdp96l3/1O9VeUcCAwEAAQ=="
+            ;
 
     public static void main(String[] args) throws Exception {
         // Map<String, String> map = genKeyPair();
         // System.out.println("公钥：" + map.get(PUBLIC_KEY_STR));
         // System.out.println("私钥：" + map.get(PRIVATE_KEY_STR));
 
-        // String encrypt = encrypt(OpenApi.SECRET, OpenApi.PUBLIC_KEY);
-        // System.out.println("加密后的字符串："+encrypt);
+        String encrypt = encrypt("123456",
+                publickey
+        );
+        System.out.println("加密后的字符串：" + encrypt);
         //
         // String decrypt = decrypt(encrypt,   OpenApi.PRIVATE_KEY);
         // System.out.println("解密密后的字符串："+decrypt);

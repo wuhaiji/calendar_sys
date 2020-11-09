@@ -38,7 +38,6 @@ public class ExceptionCatch {
     @ResponseBody
     public Result customException(ServiceException e) {
         log.error("catch exception:{}", e.getMsg());
-        e.printStackTrace();
         return Result.error(e.getCode(), e.getMsg());
     }
 
@@ -46,7 +45,6 @@ public class ExceptionCatch {
     @ResponseBody
     public Result HttpRequestMethodNotSupportedException(ServiceException e) {
         log.error("catch exception:{}", e.getMsg());
-        e.printStackTrace();
         return Result.error(e.getCode(), e.getMsg());
     }
 
@@ -54,12 +52,12 @@ public class ExceptionCatch {
     @ResponseBody
     public Result exception(Exception e) {
         log.error("catch exception:{}", e.getMessage());
-        e.printStackTrace();
 
         //判断异常是否有对应resultCode
         ResultCode resultCode = exceptionMap.get(e.getClass());
 
-        if (resultCode != null) return Result.error(resultCode);
+        if (resultCode != null)
+            return Result.error(resultCode);
 
         return Result.error(CommonCode.SERVER_ERROR);
     }

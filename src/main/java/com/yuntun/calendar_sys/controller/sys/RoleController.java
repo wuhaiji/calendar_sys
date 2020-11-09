@@ -1,4 +1,4 @@
-package com.yuntun.calendar_sys.controller;
+package com.yuntun.calendar_sys.controller.sys;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 2020-11-05
  */
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/sys/role")
 public class RoleController {
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());

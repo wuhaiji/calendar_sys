@@ -1,4 +1,4 @@
-package com.yuntun.calendar_sys.config;
+package com.yuntun.calendar_sys.interceptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class ApiInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb
                 .append(" 请求IP:").append(getIpAddr(request))
                 .append("; 请求URI:").append(request.getRequestURI())
@@ -34,7 +34,7 @@ public class ApiInterceptor extends HandlerInterceptorAdapter {
 
         boolean hasParam = false;
         Enumeration<String> paramNames = request.getParameterNames();
-        sb.append("; 请求参数：{");
+        sb.append("; 请求参数:{");
         while (paramNames.hasMoreElements()) {
             hasParam = true;
             String paramName = (String) paramNames.nextElement();
@@ -45,11 +45,12 @@ public class ApiInterceptor extends HandlerInterceptorAdapter {
         }
         //删除最后一位，
         sb.deleteCharAt(sb.length() - 1);
-        sb.append("}");
         if (!hasParam) {
             sb.append("无");
+        }else{
+            sb.append("}");
         }
-        sb.append("; 开始调用。。。。。。 ");
+        sb.append("; 开始调用。。。");
         logger.info(sb.toString());
         request.setAttribute("reqTime", System.currentTimeMillis());
         return true;

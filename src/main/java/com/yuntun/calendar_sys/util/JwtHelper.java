@@ -1,7 +1,7 @@
 package com.yuntun.calendar_sys.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.SysUserCode;
 import io.jsonwebtoken.*;
@@ -46,8 +46,7 @@ public class JwtHelper {
         // 获取当前系统时间
         long nowTimeMillis = System.currentTimeMillis();
         // 添加Token过期时间
-        long expMillis = nowTimeMillis + 1;
-        Date expDate = new Date(expMillis);
+        Date expDate = new Date(nowTimeMillis + JwtConstant.EXPIRE_SECOND);
         Date now = new Date(nowTimeMillis);
         //生成密匙
         // 将BASE64SECRET常量字符串使用base64解码成字节数组
@@ -106,7 +105,7 @@ public class JwtHelper {
         // String randomString2 = getRandomString(24);
         // String string = Base64.getEncoder().encodeToString(randomString2.getBytes());
         // System.out.println(string);
-        String token = generateJWT(1+"", "zs", "chrome");
+        String token = generateJWT(1 + "", "zs", "chrome");
         Thread.sleep(100);
         //验证jwt
         Claims claims = Jwts.parser().setSigningKey(Base64.getDecoder().decode(BASE64SECRET)).parseClaimsJws(token).getBody();
@@ -125,10 +124,12 @@ public class JwtHelper {
             // 解析jwt
             return Jwts.parser().setSigningKey(Base64.getDecoder().decode(BASE64SECRET)).parseClaimsJws(jsonWebToken).getBody();
         } catch (ExpiredJwtException e) {
-            log.error("[JWTHelper]-JWT解析异常：可能因为token已经超时或非法token");
+            log.error("ExpiredJwtException:", e);
+            log.error("[JWTHelper]-JWT解析异常：token已经超时");
             throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
         } catch (Exception e) {
-            log.error("[JWTHelper]-JWT解析异常：可能因为token非法token");
+            log.error("Exception:", e);
+            log.error("[JWTHelper]-JWT解析异常：token非法token");
             throw new ServiceException(SysUserCode.LOGIN_FAILED_ILLEGAL_TOKEN);
         }
     }
@@ -144,7 +145,7 @@ public class JwtHelper {
      */
     public static JSONObject validateLogin(String jsonWebToken) {
 
-        if (StringUtils.isNotBlank(jsonWebToken)) {
+        if (EptUtil.isEmpty(jsonWebToken)) {
             log.error("[JWTHelper]-json web token 为空");
             throw new ServiceException(SysUserCode.LOGIN_FAILED_TOKEN_IS_EMPTY);
         }

@@ -4,6 +4,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.constant.UserConstant;
 import com.yuntun.calendar_sys.entity.User;
 import com.yuntun.calendar_sys.exception.ServiceException;
@@ -103,12 +104,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             insertOrUpdateUser.setUnionId(unionId);
         }
 
-        // 根据openid查询用户，这里的查询service自己写，就不贴出来了
+        // 根据openid查询用户
         User targetUser = baseMapper.selectOne(new QueryWrapper<User>().eq("open_id", openId));
         //生成token
         String wechatToken;
         try {
-            String userAgent = ServletUtil.getRequest().getHeader("User_Agent");
+            String userAgent = ServletUtil.getRequest().getHeader(JwtConstant.USER_AGENT_HEADER_KEY);
             wechatToken = JwtHelper.generateJWT(openId, insertOrUpdateUser.getNickname(), userAgent);
         } catch (Exception e) {
             log.error("生成小程序端token异常:", e);

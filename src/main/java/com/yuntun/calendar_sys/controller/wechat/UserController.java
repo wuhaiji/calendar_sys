@@ -1,4 +1,4 @@
-package com.yuntun.calendar_sys.controller;
+package com.yuntun.calendar_sys.controller.wechat;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -33,8 +33,9 @@ import java.util.stream.Collectors;
  * @since 2020-11-05
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/wechat/user")
 public class UserController {
+
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
 
     @Autowired
@@ -143,7 +144,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/wechat/login")
+    @PostMapping("/login")
     public Result<Object> login(WechatLoginDto loginRequest) {
         UserBean userInfoMap = iUserService.getUserInfoMap(loginRequest);
         return Result.ok(userInfoMap);

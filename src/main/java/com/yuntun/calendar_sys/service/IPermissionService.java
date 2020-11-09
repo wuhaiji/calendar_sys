@@ -3,6 +3,8 @@ package com.yuntun.calendar_sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yuntun.calendar_sys.entity.Permission;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -13,4 +15,5 @@ import com.yuntun.calendar_sys.entity.Permission;
  */
 public interface IPermissionService extends IService<Permission> {
 
+    List<Permission> getUserPermissions(Integer userId);
 }

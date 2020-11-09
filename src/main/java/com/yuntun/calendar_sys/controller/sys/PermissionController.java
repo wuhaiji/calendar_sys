@@ -1,4 +1,4 @@
-package com.yuntun.calendar_sys.controller;
+package com.yuntun.calendar_sys.controller.sys;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2020-11-05
  */
 @RestController
-@RequestMapping("/permission")
+@RequestMapping("/sys/permission")
 public class PermissionController {
 
 }

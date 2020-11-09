@@ -30,6 +30,11 @@ public class Role implements Serializable {
     private Integer id;
 
     /**
+     * 是否是超级管理员1：是，0：不是
+     */
+    private Boolean roleType;
+
+    /**
      * 角色名
      */
     private String roleName;

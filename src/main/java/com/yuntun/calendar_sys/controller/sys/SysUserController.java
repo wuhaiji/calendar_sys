@@ -1,8 +1,10 @@
-package com.yuntun.calendar_sys.controller;
+package com.yuntun.calendar_sys.controller.sys;
 
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
+import cn.hutool.captcha.generator.MathGenerator;
+import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static com.yuntun.calendar_sys.constant.SysUserConstant.*;
@@ -41,7 +44,7 @@ import static com.yuntun.calendar_sys.model.code.SysUserCode.LIST_SYSUSER_FAILUR
  * @since 2020-11-05
  */
 @RestController
-@RequestMapping("/sysuser")
+@RequestMapping("/sys/sysuser")
 public class SysUserController {
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
@@ -75,7 +78,6 @@ public class SysUserController {
                 .setRows(iPage.getRecords())
                 .setTotal(iPage.getTotal())
                 .setTotalPages(iPage.getTotal());
-
         return Result.ok(data);
     }
 
@@ -96,11 +98,31 @@ public class SysUserController {
 
     @PostMapping("/add")
     public Result<Object> add(SysUser SysUser) {
-        ErrorUtil.isObjectNull(SysUser, "参数");
         ErrorUtil.isObjectNull(SysUser.getRoleId(), "角色id");
         ErrorUtil.isStringEmpty(SysUser.getPhone(), "电话");
         ErrorUtil.isStringLengthOutOfRange(SysUser.getPassword(), 6, 16, "密码");
         ErrorUtil.isStringLengthOutOfRange(SysUser.getUsername(), 6, 16, "用户名");
+        String password = SysUser.getPassword();
+        SysUser.setPassword(SecureUtil.md5(password));
+
+        //校验用户名是否重复
+        List<SysUser> sysUserList = iSysUserService.list(
+                new QueryWrapper<SysUser>()
+                        .eq("username", SysUser.getUsername())
+        );
+        if(sysUserList.size()>0){
+            throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
+        }
+
+        //校验手机号是否重复
+        List<SysUser> phoneUserList = iSysUserService.list(
+                new QueryWrapper<SysUser>()
+                        .eq("phone", SysUser.getPhone())
+        );
+        if(phoneUserList.size()>0){
+            throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
+        }
+
         try {
             boolean save = iSysUserService.save(SysUser);
             if (save)
@@ -111,6 +133,10 @@ public class SysUserController {
             throw new ServiceException(SysUserCode.ADD_SYSUSER_FAILURE);
         }
 
+    }
+
+    public static void main(String[] args) {
+        System.out.println(SecureUtil.md5("123456"));
     }
 
     @PostMapping("/update")
@@ -147,7 +173,8 @@ public class SysUserController {
 
     @PostMapping("/login")
     public Result<Object> login(
-            SysUser sysUser,
+            String username,
+            String password,
             String code,
             String publickey,
             HttpSession session,
@@ -157,35 +184,34 @@ public class SysUserController {
 
         ErrorUtil.isStringEmpty(code, "图形验证码");
         ErrorUtil.isStringEmpty(publickey, "密匙");
-        ErrorUtil.isStringEmpty(sysUser.getPassword(), "密码");
-        if (EptUtil.isEmpty(sysUser.getUsername()) && EptUtil.isEmpty(sysUser.getPhone())) {
-            throw new ServiceException("PARAM_ERROR", "账号不能为空");
-        }
+        ErrorUtil.isStringEmpty(password, "密码");
+        ErrorUtil.isStringEmpty(username, "账号");
+
         //先验证图形验证码
         String totalCode = (String) session.getAttribute(SysUserConstant.CAPTCHA_SESSION_KEY);
-        if (!code.equals(totalCode)) {
+        if (totalCode==null || !new MathGenerator().verify(totalCode, code)) {
             return Result.error(SysUserCode.LOGIN_CAPTCHA_ERROR);
         }
         //再验证账号
-        SysUser totalUser;
+        SysUser targetUser;
         try {
-            totalUser = iSysUserService.getOne(
+            targetUser = iSysUserService.getOne(
                     new QueryWrapper<SysUser>()
-                            .eq("username", sysUser.getUsername())
+                            .eq("username", username)
                             .or()
-                            .eq("phone", sysUser.getPhone())
+                            .eq("phone", username)
             );
         } catch (Exception e) {
             log.error("login error:", e);
             throw new ServiceException(SysUserCode.LOGIN_EXCEPTION);
         }
-        if (totalUser == null) {
+        if (targetUser == null) {
             return Result.error(SysUserCode.LOGIN_FAILED_USERNAME_INCORRECT);
         }
 
         //最后验证密码
-        String passwordEncrypt = getPasswordDecrypt(sysUser.getPassword(), publickey);
-        if (!totalUser.getPassword().equals(passwordEncrypt)) {
+        String passwordEncrypt = getPasswordDecrypt(password, publickey);
+        if (!targetUser.getPassword().equals(SecureUtil.md5(passwordEncrypt))) {
             return Result.error(SysUserCode.LOGIN_FAILED_PASSWORD_INCORRECT);
         }
         //获取用户客户端信息，防止跨域
@@ -193,7 +219,7 @@ public class SysUserController {
         //生成jwt token
         String token;
         try {
-            token = JwtHelper.generateJWT(""+totalUser.getId(), totalUser.getUsername(), userAgent);
+            token = JwtHelper.generateJWT("" + targetUser.getId(), targetUser.getUsername(), userAgent);
             //存入redis
             RedisUtils.setValueTimeout(USER_TOKEN_REDIS_KEY, token, USER_TOKEN_REDIS_EXPIRE);
         } catch (Exception e) {
@@ -204,14 +230,14 @@ public class SysUserController {
         response.setHeader(JwtConstant.JWT_TOKEN_HEADER_KEY, token);
 
         //更新用户登录时间
-        totalUser.setLastLoginTime(LocalDateTime.now());
-        iSysUserService.updateById(totalUser);
-        totalUser.setPassword(null);
+        targetUser.setLastLoginTime(LocalDateTime.now());
+        iSysUserService.updateById(targetUser);
+        targetUser.setPassword(null);
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("username", totalUser.getUsername());
-        jsonObject.put("phone", totalUser.getPhone());
-        jsonObject.put("id", totalUser.getId());
+        jsonObject.put("username", targetUser.getUsername());
+        jsonObject.put("phone", targetUser.getPhone());
+        jsonObject.put("id", targetUser.getId());
         jsonObject.put("token", token);
         return Result.ok(jsonObject);
     }
@@ -229,7 +255,8 @@ public class SysUserController {
         System.out.println("生成密匙对时间：" + (timeMillis2 - timeMillis1));
         String publicKey = map.get(RSAUtils.PUBLIC_KEY_STR);
         String privateKey = map.get(RSAUtils.PRIVATE_KEY_STR);
-        RedisUtils.hashPut(RSA_KEYPAIR_REDIS_KEY, publicKey, privateKey);
+        //5分钟过期
+        RedisUtils.setValueTimeout(RSA_KEYPAIR_REDIS_KEY + publicKey, privateKey, 300_000);
         return Result.ok(publicKey);
     }
 
@@ -242,7 +269,12 @@ public class SysUserController {
     @GetMapping("/captcha")
     public void captcha(HttpSession session, HttpServletResponse response) throws IOException {
         try {
+
             CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(200, 100, 4, 20);
+            // 自定义验证码内容为四则运算方式
+            circleCaptcha.setGenerator(new MathGenerator(1));
+            // 重新生成code
+            circleCaptcha.createCode();
             String code = circleCaptcha.getCode();
             log.info("code:{}", code);
 
@@ -266,7 +298,7 @@ public class SysUserController {
      * @return
      */
     private String getPasswordDecrypt(String password, String publicKey) {
-        String privateKey = (String) RedisUtils.hashGet(RSA_KEYPAIR_REDIS_KEY, publicKey);
+        String privateKey = RedisUtils.getString(RSA_KEYPAIR_REDIS_KEY + publicKey);
         if (privateKey == null) {
             throw new ServiceException(SysUserCode.LOGIN_FAILED_PUBLICKEY_INCORRECT);
         }

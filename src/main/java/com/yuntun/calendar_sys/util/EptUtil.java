@@ -33,6 +33,7 @@ public class EptUtil {
             return object == null;
     }
 
+
     /**
      * 判断对象是否不为空
      * 如果是集合还会判读集合中是否有元素

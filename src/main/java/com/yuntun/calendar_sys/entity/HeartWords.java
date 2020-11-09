@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @TableName("tb_cl_soul_words")
-public class SoulWords implements Serializable {
+public class HeartWords implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

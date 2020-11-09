@@ -35,9 +35,9 @@ public class Permission implements Serializable {
     private String permissionName;
 
     /**
-     * 权限标识
+     * 权限名称
      */
-    private String permissionTag;
+    private String permissionUrl;
 
     /**
      * 权限父级id  0:顶级菜单

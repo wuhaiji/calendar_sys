@@ -424,5 +424,15 @@ public class RedisUtils {
         return redisTemplate.opsForList().range(key, start, end);
     }
 
+    /**
+     * 从List中获取begin到end之间的元素
+     * start=0，end=-1表示获取全部元素
+     *
+     * @param key Redis键
+     * @return List对象
+     */
+    public static List<Object> listGetAll(final String key) {
+        return redisTemplate.opsForList().range(key, 0, -1);
+    }
 
 }

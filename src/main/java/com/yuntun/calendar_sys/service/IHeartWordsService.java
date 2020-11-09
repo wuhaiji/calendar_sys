@@ -1,7 +1,7 @@
 package com.yuntun.calendar_sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.yuntun.calendar_sys.entity.SoulWords;
+import com.yuntun.calendar_sys.entity.HeartWords;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.yuntun.calendar_sys.entity.SoulWords;
  * @author whj
  * @since 2020-11-06
  */
-public interface ISoulWordsService extends IService<SoulWords> {
+public interface IHeartWordsService extends IService<HeartWords> {
 
 }

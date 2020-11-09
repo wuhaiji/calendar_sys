@@ -1,4 +1,4 @@
-package com.yuntun.calendar_sys.config;
+package com.yuntun.calendar_sys.interceptor;
 
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.exception.ServiceException;
@@ -20,13 +20,13 @@ import static com.yuntun.calendar_sys.constant.SysUserConstant.USER_TOKEN_REDIS_
 import static com.yuntun.calendar_sys.constant.SysUserConstant.USER_TOKEN_REDIS_KEY;
 
 /**
- * 校验登录拦截器
+ * 后台管理系统校验登录拦截器
  *
  * @author whj
  */
 @Component
-public class ValidateLoginInterceptor implements HandlerInterceptor {
-    private static final Logger log = LoggerFactory.getLogger(ValidateLoginInterceptor.class);
+public class SysLoginInterceptor implements HandlerInterceptor {
+    private static final Logger log = LoggerFactory.getLogger(SysLoginInterceptor.class);
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
@@ -56,7 +56,7 @@ public class ValidateLoginInterceptor implements HandlerInterceptor {
             log.info("[登录校验拦截器]-客户端浏览器信息与JWT中存的浏览器信息不一致。当前浏览器信息:{}", userAgent);
             throw new ServiceException(SysUserCode.USER_AGENT_EXCEPTION);
         }
-        long userId = Long.parseLong(retJson.getString(USER_ID));
+        int userId = Integer.parseInt(retJson.getString(USER_ID));
         //将客户Id设置到threadLocal中,方便以后使用
         UserIdThreadLocal.set(userId);
         // 重置redis中token过期时间

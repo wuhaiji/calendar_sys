@@ -1,11 +1,16 @@
 package com.yuntun.calendar_sys.config;
 
+import com.yuntun.calendar_sys.interceptor.ApiInterceptor;
+import com.yuntun.calendar_sys.interceptor.PermissionInterceptor;
+import com.yuntun.calendar_sys.interceptor.SysLoginInterceptor;
+import com.yuntun.calendar_sys.interceptor.WechatLoginInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -19,20 +24,48 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class webMvcConfig implements WebMvcConfigurer {
 
     @Autowired
-    ValidateLoginInterceptor validateLoginInterceptor;
-    @Autowired
     ApiInterceptor apiInterceptor;
+
+    @Autowired
+    SysLoginInterceptor sysLoginInterceptor;
+
+    @Autowired
+    PermissionInterceptor permissionInterceptor;
+
+    @Autowired
+    WechatLoginInterceptor wechatLoginInterceptor;
+
+    public static final List<String> SYS_LOGIN_WHITE_LIST = new ArrayList<>();
+    public static final List<String> WECHAT_LOGIN_WHITE_LIST = new ArrayList<>();
+
+    static {
+        SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/captcha");
+        SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/login");
+        SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/publickey");
+        //不拦截小程序端的接口
+        SYS_LOGIN_WHITE_LIST.add("/wechat/**");
+        //不拦截后台管理系统的请求
+        WECHAT_LOGIN_WHITE_LIST.add("/wechat/user/login");
+        WECHAT_LOGIN_WHITE_LIST.add("/sys/**");
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        //拦截器添加的顺序就是拦截的顺序
         registry.addInterceptor(apiInterceptor)
                 .addPathPatterns("/**");
-        registry.addInterceptor(validateLoginInterceptor)
-                .excludePathPatterns(
-                        "/calendar-sys/sysuser/captcha",
-                        "/calendar-sys/sysuser/login",
-                        "/calendar-sys/sysuser/publickey"
-                ).addPathPatterns("/**")
+
+        registry.addInterceptor(sysLoginInterceptor)
+                .excludePathPatterns(SYS_LOGIN_WHITE_LIST)
+                .addPathPatterns("/**")
+        ;
+        registry.addInterceptor(wechatLoginInterceptor)
+                .excludePathPatterns(WECHAT_LOGIN_WHITE_LIST)
+                .addPathPatterns("/**")
+        ;
+        registry.addInterceptor(permissionInterceptor)
+                .excludePathPatterns(SYS_LOGIN_WHITE_LIST)
+                .addPathPatterns("/**")
         ;
     }
 
