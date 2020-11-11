@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 前端控制器
@@ -46,15 +49,15 @@ public class HeartWordsSysController {
                         .setSize(pageSize)
                         .setCurrent(pageNo),
                 new QueryWrapper<HeartWords>()
-                        .eq(EptUtil.isNotEmpty(dto.getUsername()), "username", dto.getUsername())
                         .eq(EptUtil.isNotEmpty(dto.getUserId()), "user_id", dto.getUserId())
                         .eq(EptUtil.isNotEmpty(dto.getTempId()), "temp_id", dto.getTempId())
                         .eq(EptUtil.isNotEmpty(dto.getCreateTime()), "create_time", dto.getCreateTime())
                         .orderByDesc("id")
         );
+        List<HeartWords> records = HeartWordsIPage.getRecords();
 
         RowData<HeartWords> data = RowData.of(HeartWords.class)
-                .setRows(HeartWordsIPage.getRecords())
+                .setRows(records)
                 .setTotal(HeartWordsIPage.getTotal())
                 .setTotalPages(HeartWordsIPage.getTotal());
         log.info("心语集合：{}", data);
@@ -65,7 +68,6 @@ public class HeartWordsSysController {
     public Result<Object> add(HeartWords HeartWords) {
         ErrorUtil.isObjectNull(HeartWords.getUserId(), "用户id");
         ErrorUtil.isStringEmpty(HeartWords.getPicUrl(), "图片地址");
-        ErrorUtil.isStringEmpty(HeartWords.getUsername(), "用户名称");
         ErrorUtil.isObjectNull(HeartWords.getTempId(), "模板id");
         ErrorUtil.isStringEmpty(HeartWords.getContent(), "内容不能为空");
         ErrorUtil.isStringEmpty(HeartWords.getSource(), "来源不能为空，用户自建的用用户的名称");

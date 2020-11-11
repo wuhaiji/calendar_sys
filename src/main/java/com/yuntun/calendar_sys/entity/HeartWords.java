@@ -21,8 +21,8 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("tb_cl_soul_words")
-public class HeartWords implements Serializable {
+@TableName("tb_cl_heart_words")
+public class HeartWords implements Serializable{
 
     private static final long serialVersionUID = 1L;
 
@@ -32,12 +32,7 @@ public class HeartWords implements Serializable {
     /**
      * 信息创建用户id
      */
-    private Integer userId;
-
-    /**
-     * 信息创建用户名
-     */
-    private String username;
+    private String userOpenId;
 
     /**
      * 用户自定义上传的图片地址

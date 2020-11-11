@@ -49,7 +49,7 @@ public class PermissionInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
-        Integer userId = UserIdThreadLocal.get();
+        Integer userId = UserIdHolder.get();
 
         if (userId == null) {
             log.error("用户Id为null");
@@ -61,7 +61,7 @@ public class PermissionInterceptor extends HandlerInterceptorAdapter {
         }
 
         List<String> userPermissionList = getUserPermissionList(userId);
-        String requestURI = httpServletRequest.getRequestURI();
+        String requestURI = httpServletRequest.getServletPath();
         log.info("servletPath:" + requestURI);
         boolean flag = false;
         for (String s : userPermissionList) {

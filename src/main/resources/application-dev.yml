@@ -1,9 +1,16 @@
 server:
   port: 10000
-  servlet:
-    context-path: /calendar-sys
+#  servlet:
+#    context-path: /calendar-sys
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+      enabled: true
+      # 设置文件缓存的临界点,超过则先保存到临时目录,默认为0,所有文件都会进行缓存
+      file-size-threshold: 0
   application:
     name: calendar_sys
   jackson:
@@ -38,3 +45,7 @@ mybatis-plus:
       logic-delete-field: deleted  # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
       logic-delete-value: 1 # 逻辑已删除值(默认为 1)
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+gofastdfs:
+  file:
+    path: http://192.168.0.108:8080/
+    group: group1

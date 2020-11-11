@@ -28,6 +28,7 @@ public enum SysUserCode implements ResultCode {
     INSUFFICIENT_PERMISSIONS("20116", "权限不足"),
     USERNAME_ALREADY_EXISTS("20117", "用户名已存在"),
     PHONE_NUMBER_ALREADY_EXISTS("20118", "手机号已存在"),
+    LOGIN_OUT_ERROR("20119", "退出异常"),
             ;
     /**
      * 错误码

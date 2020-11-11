@@ -1,21 +1,21 @@
 package com.yuntun.calendar_sys.model.code;
 
 /**
- * 常用错误信息枚举
+ * <p>
+ *
+ * </p>
  *
  * @author whj
+ * @since 2020/11/10
  */
-public enum CommonCode implements ResultCode {
-
-    SUCCESS("10000", "成功!"),
-    METHOD_NOT_SUPPORT("10001", "请求方法不支持!"),
-    NETWORK_ANOMALY("10004", "网络异常!"),
-    LOGOUT_FAILED("10005", "登出失败"),
-    PARAMETER_ABNORMAL("10006", "参数异常"),
-    SERVER_ERROR("99999", "抱歉，服务器异常，请稍后重试！");
+public enum FileCode implements ResultCode {
+    FILE_NOT_EXISTS_ERROR("20501", "文件错误!"),
+    FILE_DELETE_ERROR("20502", "文件删除失败!"),
 
 
-    CommonCode(String resultCode, String resultMsg) {
+    ;
+
+    FileCode(String resultCode, String resultMsg) {
         this.resultCode = resultCode;
         this.resultMsg = resultMsg;
     }

@@ -5,7 +5,7 @@ package com.yuntun.calendar_sys.interceptor;
  *
  * @author whj
  */
-public class UserIdThreadLocal {
+public class UserIdHolder {
     private static final ThreadLocal<Integer> userTl = new ThreadLocal<>();
 
     public static void set(Integer userId) {

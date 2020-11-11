@@ -21,7 +21,9 @@ public class RSAUtils {
     public static final String PRIVATE_KEY_STR = "privateKey";
     private static final int DEFAULT_RSA_KEY_SIZE = 512;
     public static final String publickey =
-"MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKlMl/ciN+IeMGCE9Rjr7JIrG95Kwb3QGgpbs4xYaOovHPMZ/DoVtezRnR42iYCi4n0UPoORIdp96l3/1O9VeUcCAwEAAQ=="
+
+"MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAIOAtYh0Y4B+wiICgJf/En04eJ+Ar4CQWvkrJNs3VJK9V4d1a2kttImrOob68n7OCBN72J7ZG6WiDQzJ/dFWG/cCAwEAAQ=="
+
             ;
 
     public static void main(String[] args) throws Exception {

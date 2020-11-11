@@ -1,6 +1,7 @@
 package com.yuntun.calendar_sys.controller.wechat;
 
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -41,46 +42,6 @@ public class UserController {
     @Autowired
     IUserService iUserService;
 
-    @GetMapping("/list")
-    public Result<RowData<UserBean>> list(Integer pageSize, Integer pageNo, User user) {
-
-        ErrorUtil.isNumberValueLt(pageSize, 0, "pageSize");
-        ErrorUtil.isNumberValueLt(pageNo, 0, "pageNo");
-
-        IPage<User> iPage;
-        try {
-            iPage = iUserService.page(
-                    new Page<User>()
-                            .setSize(pageSize)
-                            .setCurrent(pageNo),
-                    new QueryWrapper<User>()
-                            .eq(EptUtil.isNotEmpty(user.getNickname()), "nick_name", user.getNickname())
-                            .eq(EptUtil.isNotEmpty(user.getMobile()), "mobile", user.getMobile())
-                            .eq(EptUtil.isNotEmpty(user.getAvatarUrl()), "create_time", user.getAvatarUrl())
-                            .eq(EptUtil.isNotEmpty(user.getCity()), "create_time", user.getCity())
-                            .eq(EptUtil.isNotEmpty(user.getCountry()), "country", user.getCountry())
-                            .eq(EptUtil.isNotEmpty(user.getGender()), "gender", user.getGender())
-                            .orderByDesc("id")
-            );
-        } catch (Exception e) {
-            throw new ServiceException(UserCode.LIST_USER_FAILURE);
-        }
-
-        //转换成userBean
-        List<User> records = iPage.getRecords();
-        List<UserBean> userBeans = records.parallelStream().map(i -> {
-            UserBean userBean = new UserBean();
-            BeanUtils.copyProperties(i, userBean);
-            return userBean;
-        }).collect(Collectors.toList());
-
-        RowData<UserBean> data = new RowData<UserBean>()
-                .setRows(userBeans)
-                .setTotal(iPage.getTotal())
-                .setTotalPages(iPage.getTotal());
-        return Result.ok(data);
-    }
-
     @GetMapping("/detail/{id}")
     public Result<Object> detail(@PathVariable("id") String id) {
         ErrorUtil.isObjectNull(id, "参数");
@@ -92,23 +53,6 @@ public class UserController {
         } catch (Exception e) {
             log.error("异常:", e);
             throw new ServiceException(UserCode.DETAIL_USER_FAILURE);
-        }
-
-    }
-
-    @PostMapping("/add")
-    public Result<Object> add(User user) {
-        ErrorUtil.isObjectNull(user, "参数");
-        ErrorUtil.isObjectNull(user.getUnionId(), "小程序unionId");
-
-        try {
-            boolean save = iUserService.save(user);
-            if (save)
-                return Result.ok();
-            return Result.error(UserCode.ADD_USER_FAILURE);
-        } catch (Exception e) {
-            log.error("异常:", e);
-            throw new ServiceException(UserCode.ADD_USER_FAILURE);
         }
 
     }
@@ -145,8 +89,28 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Result<Object> login(WechatLoginDto loginRequest) {
+    public Result<Object> login(@RequestBody WechatLoginDto loginRequest) {
         UserBean userInfoMap = iUserService.getUserInfoMap(loginRequest);
         return Result.ok(userInfoMap);
+
+
+    }
+
+    public static void main(String[] args) {
+        WechatLoginDto wechatLoginDto = new WechatLoginDto();
+        wechatLoginDto.setCode("");
+        wechatLoginDto.setEncryptedData("...");
+        wechatLoginDto.setIv("...");
+        wechatLoginDto.setSignature("...");
+
+        WechatLoginDto.UserInfo userInfo = new WechatLoginDto.UserInfo();
+        userInfo.setAvatarUrl("头像地址");
+        userInfo.setCity("城市");
+        userInfo.setCountry("国家");
+        userInfo.setProvince("省");
+        userInfo.setGender(1);
+        userInfo.setNickName("昵称");
+        wechatLoginDto.setUserInfo(userInfo);
+        System.out.println(JSON.toJSON(wechatLoginDto));
     }
 }

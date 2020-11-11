@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static com.yuntun.calendar_sys.constant.JwtConstant.JWT_TOKEN_HEADER_KEY;
 import static com.yuntun.calendar_sys.constant.SysUserConstant.*;
 import static com.yuntun.calendar_sys.model.code.SysUserCode.LIST_SYSUSER_FAILURE;
 
@@ -110,8 +111,8 @@ public class SysUserController {
                 new QueryWrapper<SysUser>()
                         .eq("username", SysUser.getUsername())
         );
-        if(sysUserList.size()>0){
-            throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
+        if (sysUserList.size() > 0) {
+            throw new ServiceException(SysUserCode.USERNAME_ALREADY_EXISTS);
         }
 
         //校验手机号是否重复
@@ -119,8 +120,8 @@ public class SysUserController {
                 new QueryWrapper<SysUser>()
                         .eq("phone", SysUser.getPhone())
         );
-        if(phoneUserList.size()>0){
-            throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
+        if (phoneUserList.size() > 0) {
+            throw new ServiceException(SysUserCode.PHONE_NUMBER_ALREADY_EXISTS);
         }
 
         try {
@@ -133,10 +134,6 @@ public class SysUserController {
             throw new ServiceException(SysUserCode.ADD_SYSUSER_FAILURE);
         }
 
-    }
-
-    public static void main(String[] args) {
-        System.out.println(SecureUtil.md5("123456"));
     }
 
     @PostMapping("/update")
@@ -189,7 +186,7 @@ public class SysUserController {
 
         //先验证图形验证码
         String totalCode = (String) session.getAttribute(SysUserConstant.CAPTCHA_SESSION_KEY);
-        if (totalCode==null || !new MathGenerator().verify(totalCode, code)) {
+        if (totalCode == null || !new MathGenerator().verify(totalCode, code)) {
             return Result.error(SysUserCode.LOGIN_CAPTCHA_ERROR);
         }
         //再验证账号
@@ -216,18 +213,18 @@ public class SysUserController {
         }
         //获取用户客户端信息，防止跨域
         String userAgent = request.getHeader(JwtConstant.USER_AGENT_HEADER_KEY);
-        //生成jwt token
-        String token;
+        //生成jwt jwtToken
+        String jwtToken;
         try {
-            token = JwtHelper.generateJWT("" + targetUser.getId(), targetUser.getUsername(), userAgent);
+            jwtToken = JwtHelper.generateJWT("" + targetUser.getId(), targetUser.getUsername(), userAgent);
             //存入redis
-            RedisUtils.setValueTimeout(USER_TOKEN_REDIS_KEY, token, USER_TOKEN_REDIS_EXPIRE);
+            RedisUtils.setValueTimeout(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken), jwtToken, USER_TOKEN_REDIS_EXPIRE);
         } catch (Exception e) {
             log.error("生成token异常:", e);
             throw new ServiceException(CommonCode.SERVER_ERROR);
         }
         //token放置在请求头中
-        response.setHeader(JwtConstant.JWT_TOKEN_HEADER_KEY, token);
+        response.setHeader(JwtConstant.JWT_TOKEN_HEADER_KEY, jwtToken);
 
         //更新用户登录时间
         targetUser.setLastLoginTime(LocalDateTime.now());
@@ -238,8 +235,19 @@ public class SysUserController {
         jsonObject.put("username", targetUser.getUsername());
         jsonObject.put("phone", targetUser.getPhone());
         jsonObject.put("id", targetUser.getId());
-        jsonObject.put("token", token);
+        jsonObject.put("token", jwtToken);
         return Result.ok(jsonObject);
+    }
+
+    @PostMapping("/logout")
+    public Result<Object> logout(HttpServletRequest request) {
+        String jwtToken = request.getHeader(JWT_TOKEN_HEADER_KEY);
+        if (EptUtil.isEmpty(jwtToken)) {
+            log.warn("退出登陆时，未找到用户token");
+            return Result.error(SysUserCode.LOGIN_OUT_ERROR);
+        }
+        RedisUtils.delKey(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken));
+        return Result.ok();
     }
 
     /**
@@ -288,6 +296,27 @@ public class SysUserController {
         } catch (IOException e) {
             log.error("captcha error:", e);
         }
+    }
+
+    /**
+     * 获取验证码
+     *
+     * @param session session
+     * @return 图形验证码图片base64
+     */
+    @GetMapping("/captcha/base64")
+    public Result<String> captcha(HttpSession session) throws IOException {
+
+        CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(200, 100, 4, 20);
+        // 自定义验证码内容为四则运算方式
+        circleCaptcha.setGenerator(new MathGenerator(1));
+        // 重新生成code
+        circleCaptcha.createCode();
+        String code = circleCaptcha.getCode();
+        log.info("code:{}", code);
+        session.setAttribute(SysUserConstant.CAPTCHA_SESSION_KEY, code);
+        String imageBase64 = circleCaptcha.getImageBase64();
+        return Result.ok(imageBase64);
     }
 
     /**

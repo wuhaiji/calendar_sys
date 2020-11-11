@@ -22,15 +22,13 @@ public interface SysUserConstant {
     /**
      * 用户token放在redis中的key
      */
-    String USER_TOKEN_REDIS_KEY = "user_token";
-
+    String USER_TOKEN_REDIS_KEY = "user_token:";
 
 
     /**
-     * 用户token放在redis超时时间 毫秒
+     * 用户token放在redis超时时间 （单位毫秒），总计半个小时
      */
-    long USER_TOKEN_REDIS_EXPIRE = 3600_000;
-
+    long USER_TOKEN_REDIS_EXPIRE = 1800_000;
 
 
 }
