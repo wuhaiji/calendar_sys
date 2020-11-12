@@ -35,6 +35,11 @@ public class HeartWords implements Serializable{
     private String userOpenId;
 
     /**
+     *  心语全图
+     */
+    private String imageUrl;
+
+    /**
      * 用户自定义上传的图片地址
      */
     private String picUrl;

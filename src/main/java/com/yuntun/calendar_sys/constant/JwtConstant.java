@@ -46,4 +46,9 @@ public interface JwtConstant {
      */
     public static final String USER_ID = "userId";
 
+    /**
+     * 每次请求的id
+     */
+    public static final String REQUEST_ID = "requestId";
+
 }

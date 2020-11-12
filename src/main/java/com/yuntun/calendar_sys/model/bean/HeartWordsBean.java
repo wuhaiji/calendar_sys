@@ -28,6 +28,8 @@ public class HeartWordsBean {
      */
     private Integer userId;
 
+    private String imageUrl;
+
     /**
      * 用户自定义上传的图片地址
      */

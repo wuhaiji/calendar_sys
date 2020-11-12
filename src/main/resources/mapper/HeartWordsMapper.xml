@@ -2,4 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yuntun.calendar_sys.mapper.HeartWordsMapper">
 
+    <select id="selectPrevious" resultType="com.yuntun.calendar_sys.entity.HeartWords">
+        select *,max(create_time) from tb_cl_heart_words
+        where create_time &lt;= #{dateTime}
+        group by id
+    </select>
 </mapper>

@@ -2,27 +2,19 @@ package com.yuntun.calendar_sys.controller.wechat;
 
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yuntun.calendar_sys.entity.User;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.bean.UserBean;
 import com.yuntun.calendar_sys.model.code.UserCode;
 import com.yuntun.calendar_sys.model.dto.WechatLoginDto;
 import com.yuntun.calendar_sys.model.response.Result;
-import com.yuntun.calendar_sys.model.response.RowData;
 import com.yuntun.calendar_sys.service.IUserService;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.ErrorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -90,7 +82,9 @@ public class UserController {
 
     @PostMapping("/login")
     public Result<Object> login(@RequestBody WechatLoginDto loginRequest) {
+        log.info("用户登录参数:{}", JSON.toJSONString(loginRequest));
         UserBean userInfoMap = iUserService.getUserInfoMap(loginRequest);
+        log.info("小程序登录返回用户信息：{}", JSON.toJSONString(userInfoMap));
         return Result.ok(userInfoMap);
 
 

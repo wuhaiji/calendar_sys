@@ -10,11 +10,11 @@ package com.yuntun.calendar_sys.model.code;
  */
 
 public enum HeartWordsCode implements ResultCode {
-    DETAIL_SYSUSER_ERROR("20101", "查询心语详情异常"),
-    ADD_HEART_WORDS_ERROR("20102", "添加心语异常"),
-    UPDATE_SYSUSER_ERROR("20103", "修改心语异常"),
-    DELETE_SYSUSER_ERROR("20104", "删除心语异常"),
-    LIST_SYSUSER_ERROR("20105", "分页查询心语列表异常"),
+    DETAIL_SYSUSER_ERROR("20501", "查询最新心语详情异常"),
+    ADD_HEART_WORDS_ERROR("20502", "添加心语异常"),
+    UPDATE_SYSUSER_ERROR("20503", "修改心语异常"),
+    DELETE_SYSUSER_ERROR("20504", "删除心语异常"),
+    LIST_SYSUSER_ERROR("20505", "分页查询心语列表异常"),
     ;
     /**
      * 错误码

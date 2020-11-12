@@ -52,7 +52,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public static final String appid = "wx6c889de5602cdf0c";
     public static final String secret = "f8499a4d5ce441267a07ab792086a08c";
     public static final String grant_type = "authorization_code";
-    public static final int SUCCESS_CODE = 0;
 
     @Override
     public UserBean getUserInfoMap(WechatLoginDto loginRequest) {
@@ -66,6 +65,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             paramMap.put("grant_type", grant_type);
             paramMap.put("js_code", loginRequest.getCode());
             String body = HttpUtil.get(wechatLoginUrl, paramMap);
+            log.info("微信登录返回信息：{}", body);
             wechatLoginBean = JSONObject.parseObject(body, WechatLoginBean.class);
         } catch (Exception e) {
             log.error("请求微信平台异常:", e);
@@ -74,18 +74,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         String sessionKey = wechatLoginBean.getSession_key();
         String openId = wechatLoginBean.getOpenid();
-        Integer errcode = wechatLoginBean.getErrcode();
         //校验返回值
-        if (EptUtil.isEmpty(errcode)
-                || errcode != SUCCESS_CODE
-                || EptUtil.isEmpty(sessionKey)
-                || EptUtil.isEmpty(openId)
-
-        ) {
+        if (EptUtil.isEmpty(sessionKey) || EptUtil.isEmpty(openId)) {
             log.error("微信平台报错：{}", wechatLoginBean.getErrmsg());
             throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
         }
-
 
         WechatLoginDto.UserInfo userInfo = loginRequest.getUserInfo();
         User insertOrUpdateUser = new User();
@@ -115,9 +108,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             log.error("生成小程序端token异常:", e);
             throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
         }
-        insertOrUpdateUser.setToken(wechatToken);
-
-
         if (targetUser == null) {
             // 用户不存在，insert用户，这里加了个分布式锁，防止insert重复用户，看自己的业务，决定要不要这段代码
             if (RedisUtils.setLockNx(UserConstant.INSERT_USER_DISTRIBUTED_LOCK_PREFIX, 10L, TimeUnit.SECONDS)) {
@@ -130,6 +120,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         UserBean userBean = new UserBean();
         BeanUtils.copyProperties(insertOrUpdateUser, userBean);
+        //设置token
+        userBean.setToken(wechatToken);
         return userBean;
     }
 

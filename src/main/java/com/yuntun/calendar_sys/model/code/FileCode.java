@@ -9,8 +9,8 @@ package com.yuntun.calendar_sys.model.code;
  * @since 2020/11/10
  */
 public enum FileCode implements ResultCode {
-    FILE_NOT_EXISTS_ERROR("20501", "文件错误!"),
-    FILE_DELETE_ERROR("20502", "文件删除失败!"),
+    FILE_NOT_EXISTS_ERROR("20601", "文件错误!"),
+    FILE_DELETE_ERROR("20602", "文件删除失败!"),
 
 
     ;

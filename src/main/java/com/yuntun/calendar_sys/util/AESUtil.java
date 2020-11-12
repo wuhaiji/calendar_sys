@@ -5,14 +5,16 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Objects;
 
 /**
  * AES加密工具类
  *
  * @author vic
  */
-public class AESSecretUtil {
+public class AESUtil {
     /**
      * 秘钥的大小
      */
@@ -37,10 +39,9 @@ public class AESSecretUtil {
                 byte[] enCodeFormat = secretKey.getEncoded();
                 SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, "AES");
                 Cipher cipher = Cipher.getInstance("AES");// 创建密码器
-                byte[] byteContent = data.getBytes("utf-8");
+                byte[] byteContent = data.getBytes(StandardCharsets.UTF_8);
                 cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);// 初始化
-                byte[] result = cipher.doFinal(byteContent);
-                return result; // 加密
+                return cipher.doFinal(byteContent); // 加密
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -56,7 +57,7 @@ public class AESSecretUtil {
      * @return
      */
     public static String encryptToStr(String data, String key) {
-        return EptUtil.isNotEmpty(data) ? parseByte2HexStr(encrypt(data, key)) : null;
+        return EptUtil.isNotEmpty(data) ? parseByte2HexStr(Objects.requireNonNull(encrypt(data, key))) : null;
     }
 
     /**
@@ -79,8 +80,7 @@ public class AESSecretUtil {
                 SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, "AES");
                 Cipher cipher = Cipher.getInstance("AES");// 创建密码器
                 cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);// 初始化
-                byte[] result = cipher.doFinal(data);
-                return result; // 加密
+                return cipher.doFinal(data); // 加密
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -96,7 +96,7 @@ public class AESSecretUtil {
      * @return
      */
     public static String decryptToStr(String enCryptdata, String key) {
-        return EptUtil.isNotEmpty(enCryptdata) ? new String(decrypt(parseHexStr2Byte(enCryptdata), key)) : null;
+        return EptUtil.isNotEmpty(enCryptdata) ? new String(Objects.requireNonNull(decrypt(parseHexStr2Byte(enCryptdata), key))) : null;
     }
 
     /**
@@ -104,10 +104,10 @@ public class AESSecretUtil {
      *
      * @param buf 二进制数组
      */
-    public static String parseByte2HexStr(byte buf[]) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < buf.length; i++) {
-            String hex = Integer.toHexString(buf[i] & 0xFF);
+    public static String parseByte2HexStr(byte[] buf) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : buf) {
+            String hex = Integer.toHexString(b & 0xFF);
             if (hex.length() == 1) {
                 hex = '0' + hex;
             }

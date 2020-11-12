@@ -30,10 +30,15 @@ public class ServiceException extends RuntimeException {
         this.msg = errorInfoInterface.getMsg();
     }
 
-    public ServiceException(ResultCode code, Throwable cause) {
-        super(code.getCode(), cause);
-        this.code = code.getCode();
-        this.msg = code.getMsg();
+    public ServiceException(String code, String msg, Throwable cause) {
+        super(msg, cause);
+        this.code = code;
+        this.msg = msg;
+    }
+
+    public ServiceException(Throwable cause) {
+        super(cause);
+        this.msg = cause.getMessage();
     }
 
     public ServiceException(String msg) {
@@ -43,12 +48,6 @@ public class ServiceException extends RuntimeException {
 
     public ServiceException(String code, String msg) {
         super(msg);
-        this.code = code;
-        this.msg = msg;
-    }
-
-    public ServiceException(String code, String msg, Throwable cause) {
-        super(msg, cause);
         this.code = code;
         this.msg = msg;
     }

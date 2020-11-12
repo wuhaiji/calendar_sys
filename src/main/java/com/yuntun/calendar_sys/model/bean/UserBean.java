@@ -70,4 +70,6 @@ public class UserBean {
     private String unionId;
 
 
+
+
 }

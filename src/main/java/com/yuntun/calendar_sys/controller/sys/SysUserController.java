@@ -297,7 +297,6 @@ public class SysUserController {
             log.error("captcha error:", e);
         }
     }
-
     /**
      * 获取验证码
      *

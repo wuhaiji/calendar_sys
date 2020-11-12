@@ -6,9 +6,11 @@ import com.yuntun.calendar_sys.mapper.HeartWordsMapper;
 import com.yuntun.calendar_sys.service.IHeartWordsService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author whj
@@ -17,4 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class HeartWordsServiceImpl extends ServiceImpl<HeartWordsMapper, HeartWords> implements IHeartWordsService {
 
+    @Override
+    public HeartWords selectPrevious(LocalDateTime dateTime) {
+        return baseMapper.selectPrevious(dateTime);
+    }
 }

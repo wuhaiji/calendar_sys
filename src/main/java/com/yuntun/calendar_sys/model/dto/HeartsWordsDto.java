@@ -3,6 +3,7 @@ package com.yuntun.calendar_sys.model.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -20,9 +21,19 @@ public class HeartsWordsDto  {
     Integer pageNo;
 
     /**
+     * 心语id
+     */
+    Integer id;
+
+    /**
      * 信息创建用户id
      */
     private String userOpenId;
+
+    /**
+     *  心语全图
+     */
+    private String imageUrl;
 
     /**
      * 用户自定义上传的图片地址
@@ -37,7 +48,7 @@ public class HeartsWordsDto  {
     /**
      * 内容
      */
-    private String content;
+    private List<String> content;
 
     /**
      * 来源
@@ -48,6 +59,13 @@ public class HeartsWordsDto  {
      * 模板id
      */
     private Integer tempId;
+
+    /**
+     * 审核状态 0.审核通过 1.未通过
+     */
+    private Integer disable;
+
+    private Long month;
 
 
 }

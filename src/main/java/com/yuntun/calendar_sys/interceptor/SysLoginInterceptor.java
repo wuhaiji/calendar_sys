@@ -2,6 +2,7 @@ package com.yuntun.calendar_sys.interceptor;
 
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.SysUserCode;
 import com.yuntun.calendar_sys.util.EptUtil;
@@ -29,6 +30,7 @@ import static com.yuntun.calendar_sys.constant.SysUserConstant.USER_TOKEN_REDIS_
 public class SysLoginInterceptor implements HandlerInterceptor {
     private static final Logger log = LoggerFactory.getLogger(SysLoginInterceptor.class);
 
+
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
@@ -40,6 +42,11 @@ public class SysLoginInterceptor implements HandlerInterceptor {
             log.info("[sys登录校验拦截器]-未登录");
             throw new ServiceException(SysUserCode.NOT_LOGGED_IN);
         }
+        //测试用，生产环境删除
+        if (jwtToken.equals("!@#")) {
+            return true;
+        }
+
         //判断token在redis中是否过期
         if (RedisUtils.getString(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken)) == null) {
             throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
@@ -72,6 +79,11 @@ public class SysLoginInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+        String requestId = httpServletResponse.getHeader(REQUEST_ID);
+        if(EptUtil.isEmpty(requestId)){
+            String randomString = JwtHelper.getRandomString(16);
+            httpServletResponse.setHeader(REQUEST_ID,randomString);
+        }
         //清除threadLocal，保证内存不会泄露
         UserIdHolder.clear();
     }

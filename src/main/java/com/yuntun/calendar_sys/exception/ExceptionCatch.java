@@ -36,21 +36,22 @@ public class ExceptionCatch {
 
     @ExceptionHandler(ServiceException.class)
     @ResponseBody
-    public Result customException(ServiceException e) {
-        log.error("catch exception:", e);
+    public Result<Object> customException(ServiceException e) {
+        log.error("ServiceException:{}", e.getMsg());
+        e.printStackTrace();
         return Result.error(e.getCode(), e.getMsg());
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseBody
-    public Result HttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
-        log.error("catch exception:", e);
-        return Result.error(CommonCode.METHOD_NOT_SUPPORT.getCode(),e.getMessage());
+    public Result<Object> HttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        log.error("ServiceException:", e);
+        return Result.error(CommonCode.METHOD_NOT_SUPPORT.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    public Result exception(Exception e) {
+    public Result<Object> exception(Exception e) {
         log.error("Exception:", e);
         //判断异常是否有对应resultCode
         ResultCode resultCode = exceptionMap.get(e.getClass());

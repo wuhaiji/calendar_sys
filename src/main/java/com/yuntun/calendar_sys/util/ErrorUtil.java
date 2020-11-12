@@ -2,6 +2,8 @@ package com.yuntun.calendar_sys.util;
 
 import com.yuntun.calendar_sys.exception.ServiceException;
 
+import java.util.Collection;
+
 /**
  * <p>
  * 参数检查工具类
@@ -20,6 +22,21 @@ public class ErrorUtil {
      */
     public static void isObjectNull(Object object, String msg) {
         if (object == null) {
+            throw new ServiceException("PARAM_ERROR", msg + "不能为空");
+        }
+    }
+
+    /**
+     * 参数检查， 目标不能为null
+     *
+     * @param collection 目标集合
+     * @param msg    异常信息
+     */
+    public static void isListEmpty(Collection collection, String msg) {
+        if (collection == null) {
+            throw new ServiceException("PARAM_ERROR", msg + "不能为空");
+        }
+        if (collection.size() <= 0) {
             throw new ServiceException("PARAM_ERROR", msg + "不能为空");
         }
     }

@@ -29,10 +29,6 @@ public class User implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    /**
-     * token
-     */
-    private String token;
 
     /**
      * 用户昵称

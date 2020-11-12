@@ -2,6 +2,7 @@ package com.yuntun.calendar_sys.controller.sys;
 
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.service.FileService;
+import com.yuntun.calendar_sys.util.Base64DecodeMultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,14 +29,27 @@ public class FileUploadSysController {
     /**
      * 文件上传
      *
-     * @param file 文件 以及设备类型id
+     * @param file 文件
      * @return 文件路径
      */
     @PostMapping("/upload")
     public Result goFastDFSUploadFile(@RequestBody MultipartFile file) {
-        log.info("smart-home-service->FileController->begin go-fastDFS upload file");
         return Result.ok(fileService.goFastDFSUploadFile(file));
     }
+    /**
+     * 文件上传
+     *
+     * @param file 文件
+     * @return 文件路径
+     */
+    @PostMapping("/upload/base64")
+    public Result goFastDFSUploadFile(String file) {
+        log.info("文件base64:"+file);
+        MultipartFile multipartFile = Base64DecodeMultipartFile.base64ToMultipartFile(file);
+        String data = fileService.goFastDFSUploadFile(multipartFile);
+        return Result.ok(data);
+    }
+
 
     /**
      * 删除图片

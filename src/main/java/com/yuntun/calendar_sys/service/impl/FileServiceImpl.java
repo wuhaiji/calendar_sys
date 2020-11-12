@@ -56,6 +56,7 @@ public class FileServiceImpl implements FileService {
             String urlString = goFastDFSProperties.path + goFastDFSProperties.group + "/upload";
             String resp = HttpUtil.post(urlString, params);
             JSONObject jsonObject = JSONObject.parseObject(resp);
+            System.out.println(resp);
             String path = jsonObject.getJSONObject("data").getString("path");
             log.info("path:{}",path);
             return path;

@@ -1,5 +1,6 @@
 package com.yuntun.calendar_sys.util;
 
+import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
@@ -11,6 +12,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.yuntun.calendar_sys.constant.JwtConstant.AES_SECRET;
 import static com.yuntun.calendar_sys.constant.JwtConstant.BASE64SECRET;
@@ -25,10 +27,13 @@ import static com.yuntun.calendar_sys.constant.JwtConstant.BASE64SECRET;
 @SuppressWarnings("restriction")
 public class JwtHelper {
 
+    public static final ConcurrentHashMap<String, String> CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
 
     public static final String USER_AGENT = "userAgent";
     public static final String USER_NAME = "userName";
     public static final String USER_ID = "userId";
+    public static final String EXPIRE_TIME = "expireTime";
+    public static final String SHA_256 = "SHA-256";
 
     /**
      * 生成JWT字符串 格式：A.B.C A-header头信息 B-payload 有效负荷 C-signature 签名信息
@@ -61,7 +66,7 @@ public class JwtHelper {
         JwtBuilder builder = Jwts.builder().setHeader(headMap)
                 // Payload { "userId": "1234567890", "userName": "vic", }
                 // 加密后的客户编号
-                .claim(USER_ID, AESSecretUtil.encryptToStr(userId, AES_SECRET))
+                .claim(USER_ID, AESUtil.encryptToStr(userId, AES_SECRET))
                 // 客户名称
                 .claim(USER_NAME, userName)
                 // 客户端浏览器信息
@@ -80,44 +85,47 @@ public class JwtHelper {
      * 是将header和payload进行加密生成的
      *
      * @param userId     用户编号
-     * @param userName   用户名
      * @param identities 客户端信息（变长参数），目前包含浏览器信息，用于客户端拦截器校验，防止跨域非法访问
      * @return
      */
-    public static String generateJWT(String userId, String userName,Long expireTime, String... identities) {
+    public static String generateJWTCustomize(String userId, Long expireTime, String... identities) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(USER_ID, userId);
+        jsonObject.put(USER_AGENT, identities[0]);
+        jsonObject.put(EXPIRE_TIME + System.currentTimeMillis(), expireTime);
 
-        // 签名算法，选择SHA-256
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-        // 获取当前系统时间
-        long nowTimeMillis = System.currentTimeMillis();
-        // 添加Token过期时间
-        Date expDate = new Date(nowTimeMillis + expireTime);
-        Date now = new Date(nowTimeMillis);
-        //生成密匙
-        // 将BASE64SECRET常量字符串使用base64解码成字节数组
-        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(BASE64SECRET);
-        // 使用HmacSHA256签名算法生成一个HS256的签名秘钥Key
-        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-        // 添加构成JWT的参数
-        Map<String, Object> headMap = new HashMap<>(2);
-        // Header { "alg": "HS256", "typ": "JWT" }
-        headMap.put("alg", SignatureAlgorithm.HS256.getValue());
-        headMap.put("typ", "JWT");
-        JwtBuilder builder = Jwts.builder().setHeader(headMap)
-                // Payload { "userId": "1234567890", "userName": "vic", }
-                // 加密后的客户编号
-                .claim(USER_ID, AESSecretUtil.encryptToStr(userId, AES_SECRET))
-                // 客户名称
-                .claim(USER_NAME, userName)
-                // 客户端浏览器信息
-                .claim(USER_AGENT, identities[0])
-                // Signature
-                .signWith(signatureAlgorithm, signingKey)
-                //设置过期时间
-                .setExpiration(expDate)
-                .setNotBefore(now);
-        return builder.compact();
+        RSAUtils.KeyPairBase64 keyPair = RSAUtils.genKeyPairBase64();
+        String privateKey = keyPair.getPrivateKey();
+        String publicKey = keyPair.getPublicKey();
+        String publicKeyMd5 = SecureUtil.md5(publicKey);
+
+        CONCURRENT_HASH_MAP.put("JWT_RSA_KEY_PAIR:" + publicKeyMd5, privateKey);
+        try {
+            String encrypt = RSAUtils.encrypt(jsonObject.toJSONString(), publicKey);
+
+            encrypt = publicKeyMd5 + "." + encrypt;
+            log.info("自定义jwt结果：{}", encrypt);
+            return encrypt;
+        } catch (Exception e) {
+            log.error("RSA加密失败:", e);
+            return null;
+        }
     }
+
+    /**
+     * 验证自定义jwt有效性
+     *
+     * @param userId     用户编号
+     * @param identities 客户端信息（变长参数），目前包含浏览器信息，用于客户端拦截器校验，防止跨域非法访问
+     * @return
+     */
+    public static JSONObject validateJWTCustomize(String userId, Long expireTime, String... identities) {
+
+        return null;
+
+    }
+
+
     /**
      * 生成随机字符串
      *
@@ -149,12 +157,9 @@ public class JwtHelper {
         // String randomString2 = getRandomString(24);
         // String string = Base64.getEncoder().encodeToString(randomString2.getBytes());
         // System.out.println(string);
-        String token = generateJWT(1 + "", "zs", "chrome");
-        Thread.sleep(100);
-        //验证jwt
-        Claims claims = Jwts.parser().setSigningKey(Base64.getDecoder().decode(BASE64SECRET)).parseClaimsJws(token).getBody();
-        System.out.println(JSONObject.toJSON(claims));
 
+        String chrome = generateJWTCustomize("1", 30_000L, "chrome");
+        System.out.println(chrome);
     }
 
     /**
@@ -199,7 +204,7 @@ public class JwtHelper {
             return retMap;
         }
         // 解密用户id编号
-        retMap.put(USER_ID, AESSecretUtil.decryptToStr((String) claims.get(USER_ID), AES_SECRET));
+        retMap.put(USER_ID, AESUtil.decryptToStr((String) claims.get(USER_ID), AES_SECRET));
         // 客户名称
         retMap.put(USER_NAME, claims.get(USER_NAME));
         // 客户端浏览器信息

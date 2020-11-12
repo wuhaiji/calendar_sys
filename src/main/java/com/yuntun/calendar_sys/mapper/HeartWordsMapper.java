@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yuntun.calendar_sys.entity.HeartWords;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
+
 /**
 * <p>
     *  Mapper 接口
@@ -15,4 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface HeartWordsMapper extends BaseMapper<HeartWords> {
 
+    HeartWords selectPrevious(LocalDateTime dateTime);
 }

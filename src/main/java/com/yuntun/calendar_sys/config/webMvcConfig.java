@@ -69,10 +69,10 @@ public class webMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(SYS_LOGIN_WHITE_LIST)
                 .addPathPatterns("/**")
         ;
-        // registry.addInterceptor(wechatLoginInterceptor)
-        //         .excludePathPatterns(WECHAT_LOGIN_WHITE_LIST)
-        //         .addPathPatterns("/**")
-        // ;
+        registry.addInterceptor(wechatLoginInterceptor)
+                .excludePathPatterns(WECHAT_LOGIN_WHITE_LIST)
+                .addPathPatterns("/**")
+        ;
         registry.addInterceptor(permissionInterceptor)
                 .excludePathPatterns(SYS_LOGIN_WHITE_LIST)
                 .addPathPatterns("/**")
