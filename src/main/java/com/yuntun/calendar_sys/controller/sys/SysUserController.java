@@ -15,12 +15,14 @@ import com.yuntun.calendar_sys.entity.SysUser;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.CommonCode;
 import com.yuntun.calendar_sys.model.code.SysUserCode;
+import com.yuntun.calendar_sys.model.dto.SysUserDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
 import com.yuntun.calendar_sys.service.ISysUserService;
 import com.yuntun.calendar_sys.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -99,10 +101,11 @@ public class SysUserController {
 
     @PostMapping("/add")
     public Result<Object> add(SysUser SysUser) {
+
         ErrorUtil.isObjectNull(SysUser.getRoleId(), "角色id");
         ErrorUtil.isStringEmpty(SysUser.getPhone(), "电话");
+        ErrorUtil.isStringLengthOutOfRange(SysUser.getUsername(), 2, 10, "用户名");
         ErrorUtil.isStringLengthOutOfRange(SysUser.getPassword(), 6, 16, "密码");
-        ErrorUtil.isStringLengthOutOfRange(SysUser.getUsername(), 6, 16, "用户名");
         String password = SysUser.getPassword();
         SysUser.setPassword(SecureUtil.md5(password));
 
@@ -137,11 +140,13 @@ public class SysUserController {
     }
 
     @PostMapping("/update")
-    public Result<Object> update(SysUser sysUser) {
+    public Result<Object> update(SysUserDto sysUserDto) {
 
-        ErrorUtil.isObjectNull(sysUser, "参数");
-        ErrorUtil.isObjectNull(sysUser.getId(), "角色id");
+        ErrorUtil.isObjectNull(sysUserDto, "参数");
+        ErrorUtil.isObjectNull(sysUserDto.getId(), "角色id");
 
+        SysUser sysUser = new SysUser();
+        BeanUtils.copyProperties(sysUserDto, sysUser);
         try {
             boolean save = iSysUserService.updateById(sysUser);
             if (save)
@@ -166,6 +171,23 @@ public class SysUserController {
             log.error("异常:", e);
             throw new ServiceException(SysUserCode.DELETE_SYSUSER_FAILURE);
         }
+    }
+
+    @PostMapping("/disable/{id}")
+    public Result<Object> disable(@PathVariable("id") Integer id) {
+        ErrorUtil.isObjectNull(id, "用户id");
+        try {
+            SysUser sysUser = new SysUser().setDisable(IS_DISABLED).setId(id);
+            boolean b = iSysUserService.updateById(sysUser);
+            if (b)
+                return Result.ok();
+            return Result.error(SysUserCode.DELETE_SYSUSER_FAILURE);
+        } catch (Exception e) {
+            log.error("异常:", e);
+            throw new ServiceException(SysUserCode.DELETE_SYSUSER_FAILURE);
+        }
+
+
     }
 
     @PostMapping("/login")
@@ -204,6 +226,10 @@ public class SysUserController {
         }
         if (targetUser == null) {
             return Result.error(SysUserCode.LOGIN_FAILED_USERNAME_INCORRECT);
+        }
+
+        if (targetUser.getDisable().equals(IS_DISABLED)) {
+            return Result.error(SysUserCode.LOGIN_FAILED_ERROR_ACCOUNT_IS_DISABLED);
         }
 
         //最后验证密码
@@ -297,6 +323,7 @@ public class SysUserController {
             log.error("captcha error:", e);
         }
     }
+
     /**
      * 获取验证码
      *

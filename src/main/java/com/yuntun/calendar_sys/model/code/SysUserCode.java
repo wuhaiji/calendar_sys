@@ -29,6 +29,7 @@ public enum SysUserCode implements ResultCode {
     USERNAME_ALREADY_EXISTS("20117", "用户名已存在"),
     PHONE_NUMBER_ALREADY_EXISTS("20118", "手机号已存在"),
     LOGIN_OUT_ERROR("20119", "退出异常"),
+    LOGIN_FAILED_ERROR_ACCOUNT_IS_DISABLED("20120", "账号被禁用"),
             ;
     /**
      * 错误码

@@ -242,7 +242,7 @@ public class HeartWordsController {
         ErrorUtil.isStringEmpty(dto.getSource(), "来源不能为空，用户自建的用用户的名称");
 
 
-        //心语处成一句字符串
+        //心语转为一句字符串
         HeartWords heartWords = new HeartWords();
         BeanUtils.copyProperties(dto, heartWords);
         StringBuilder stringBuilder = new StringBuilder();
@@ -269,7 +269,7 @@ public class HeartWordsController {
         heartWords.setCreator(user.getId());
         LocalDateTime now = LocalDateTime.now();
         System.out.println("心语创建时间:"+ now);
-        // heartWords.setCreateTime(now);
+        heartWords.setCreateTime(now);
 
         //保存
         try {

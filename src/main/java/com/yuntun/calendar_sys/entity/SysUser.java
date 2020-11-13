@@ -64,6 +64,12 @@ public class SysUser implements Serializable {
      */
     private LocalDateTime createTime;
 
+    private Integer disable;
+
+    private LocalDateTime disableTime;
+
+    private Integer disableBy;
+
     /**
      * 修改者id
      */

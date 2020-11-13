@@ -12,6 +12,7 @@ public enum CommonCode implements ResultCode {
     NETWORK_ANOMALY("10004", "网络异常!"),
     LOGOUT_FAILED("10005", "登出失败"),
     PARAMETER_ABNORMAL("10006", "参数异常"),
+    FREQUENT_OPERATION("10007", "操作频繁,请稍后再试"),
     SERVER_ERROR("99999", "抱歉，服务器异常，请稍后重试！");
 
 

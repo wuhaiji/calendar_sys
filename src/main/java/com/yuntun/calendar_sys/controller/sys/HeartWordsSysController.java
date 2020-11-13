@@ -88,11 +88,14 @@ public class HeartWordsSysController {
 
         heartWords.setUserOpenId(null);
         List<String> content = heartsWordsDto.getContent();
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String s : content) {
-            stringBuilder.append(s).append(HeartWordsConstant.CONTENT_DELIMITER);
+        if (content != null) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String s : content) {
+                stringBuilder.append(s).append(HeartWordsConstant.CONTENT_DELIMITER);
+            }
+            heartWords.setContent(stringBuilder.toString());
+
         }
-        heartWords.setContent(stringBuilder.toString());
         try {
             boolean save = iHeartWordsService.updateById(heartWords);
             if (save) {

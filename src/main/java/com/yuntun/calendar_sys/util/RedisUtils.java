@@ -3,6 +3,7 @@ package com.yuntun.calendar_sys.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
@@ -171,6 +172,36 @@ public class RedisUtils {
     public static Object getValue(final String key) {
 
         return redisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * 获取键的存活剩余时间 -2表示不存在 ，-1 key 存在但没有设置剩余生存时间时
+     *
+     * @param key 键
+     * @return 对象
+     */
+    public static Long getExpireTimePTtl(final String key) {
+        Long pTtl = redisTemplate.execute((RedisCallback<Long>) redisConnection -> redisConnection.pTtl(key.getBytes()));
+
+        if (pTtl == null || pTtl == -2) {
+            return null;
+        }
+        return pTtl;
+    }
+
+    /**
+     * 获取键的存活剩余时间 -2表示不存在 ，-1 key 存在但没有设置剩余生存时间时
+     *
+     * @param key 键
+     * @return 对象
+     */
+    public static Long getExpireTimeTTl(final String key) {
+        Long ttl = redisTemplate.execute((RedisCallback<Long>) redisConnection -> redisConnection.ttl(key.getBytes()));
+
+        if (ttl == null || ttl == -2) {
+            return null;
+        }
+        return ttl;
     }
 
     /**

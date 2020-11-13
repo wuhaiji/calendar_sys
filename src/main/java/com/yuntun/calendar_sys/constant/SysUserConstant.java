@@ -30,5 +30,13 @@ public interface SysUserConstant {
      */
     long USER_TOKEN_REDIS_EXPIRE = 1800_000;
 
+    /**
+     * 未禁用
+     */
+    Integer NOT_DISABLED = 1;
 
+    /**
+     * 未禁用
+     */
+    Integer IS_DISABLED = 0;
 }

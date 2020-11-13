@@ -1,10 +1,13 @@
 package com.yuntun.calendar_sys.interceptor;
 
+import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.exception.ServiceException;
+import com.yuntun.calendar_sys.model.code.CommonCode;
 import com.yuntun.calendar_sys.model.code.UserCode;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.JwtHelper;
+import com.yuntun.calendar_sys.util.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,6 +31,15 @@ import static com.yuntun.calendar_sys.constant.JwtConstant.*;
 public class WechatLoginInterceptor implements HandlerInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(WechatLoginInterceptor.class);
+    public static final String API_LIMITING = "api_limiting:";
+    /**
+     * api接口限制请求次数的超时时间 1 秒
+     */
+    public static final int API_LIMITING_TIMEOUT = 1;
+    /**
+     * 同一个token一秒最多请求统同一个url一次
+     */
+    public static final int LIMIT_FREQUENCY_IN_10_SECONDS = 1;
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
@@ -41,8 +53,12 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
             throw new ServiceException(UserCode.NOT_LOGGED_IN);
         }
 
-        if(jwt.equals("!@#"))
+        //接口限次数,同一个token不能频繁请求
+        checkRequestFrequency(jwt, httpServletRequest.getServletPath());
+
+        if (jwt.equals("!@#"))
             return true;
+
         //校验jwt是否有效,有效则返回json信息，无效则返回空
         JSONObject retJson = JwtHelper.validateLogin(jwt);
         //retJSON为空则说明jwt超时或非法
@@ -50,24 +66,57 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
             throw new ServiceException(UserCode.LOGIN_FAILED_TIME_OUT);
         }
 
-        //校验浏览器客户端信息
-        // String userAgent = httpServletRequest.getHeader(USER_AGENT_HEADER_KEY);
-        // String userAgentInJSON = retJson.getString(USER_AGENT);
-        // log.error("token中的浏览器信息：{}", userAgentInJSON);
-        // log.error("header中的浏览器信息：{}", userAgent);
-        // if (!userAgent.equals(userAgentInJSON)) {
-        //     // log.error("token中的浏览器信息：{}", userAgentInJSON);
-        //     // log.error("header中的浏览器信息：{}", userAgent);
-        //     log.info("[小程序登录校验拦截器]-客户端浏览器信息与JWT中存的浏览器信息不一致。当前浏览器信息:{}", userAgent);
-        //     throw new ServiceException(UserCode.USER_AGENT_EXCEPTION);
-        // }
-
-
+        // checkUserAgent(httpServletRequest, retJson);
         //将openId设置到threadLocal中,方便以后使用
         String openId = retJson.getString(USER_ID);
         WechatOpenIdHolder.set(openId);
 
         return true;
+    }
+
+    /**
+     * 检查浏览器信息
+     * @param httpServletRequest
+     * @param retJson
+     */
+    private void checkUserAgent(HttpServletRequest httpServletRequest, JSONObject retJson) {
+        // 校验浏览器客户端信息
+        String userAgent = httpServletRequest.getHeader(USER_AGENT_HEADER_KEY);
+        String userAgentInJSON = retJson.getString(USER_AGENT);
+        log.error("token中的浏览器信息：{}", userAgentInJSON);
+        log.error("header中的浏览器信息：{}", userAgent);
+        if (!userAgent.equals(userAgentInJSON)) {
+            // log.error("token中的浏览器信息：{}", userAgentInJSON);
+            // log.error("header中的浏览器信息：{}", userAgent);
+            log.info("[小程序登录校验拦截器]-客户端浏览器信息与JWT中存的浏览器信息不一致。当前浏览器信息:{}", userAgent);
+            throw new ServiceException(UserCode.USER_AGENT_EXCEPTION);
+        }
+    }
+
+    /**
+     * 检查请求频率
+     *
+     * @param jwt
+     * @param servletPath
+     */
+    private void checkRequestFrequency(String jwt, String servletPath) {
+        String apiLimitingKey = API_LIMITING + servletPath + SecureUtil.md5(jwt);
+        Integer requestFrequency = (Integer) RedisUtils.getValue(apiLimitingKey);
+        if (requestFrequency == null) {
+            RedisUtils.setValueTimeout(apiLimitingKey, 1, API_LIMITING_TIMEOUT);
+        } else {
+            if (requestFrequency >= LIMIT_FREQUENCY_IN_10_SECONDS) {
+                throw new ServiceException(CommonCode.FREQUENT_OPERATION);
+            }
+            //请求次数加1
+            int value = 1 + requestFrequency;
+            Long expireTime = RedisUtils.getExpireTimeTTl(apiLimitingKey);
+            System.out.println("剩余时间:" + expireTime);
+            if (expireTime != null) {
+                RedisUtils.setValueTimeout(apiLimitingKey, value, expireTime);
+            }
+
+        }
     }
 
     @Override

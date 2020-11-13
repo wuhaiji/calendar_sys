@@ -65,5 +65,7 @@ public class HeartWordsBean {
      */
     private Integer dayOfMonth;
 
+    private Integer disable;
+
 
 }
