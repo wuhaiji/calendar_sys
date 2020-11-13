@@ -54,7 +54,7 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
         }
 
         //接口限次数,同一个token不能频繁请求
-        checkRequestFrequency(jwt, httpServletRequest.getServletPath());
+        // checkRequestFrequency(jwt, httpServletRequest.getServletPath());
 
         if (jwt.equals("!@#"))
             return true;
