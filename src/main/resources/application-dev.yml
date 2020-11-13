@@ -21,7 +21,7 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://192.168.0.108:3306/cl_mini_app?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Hongkong
+    url: jdbc:mysql://192.168.0.108:3306/cl_mini_app?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -50,3 +50,4 @@ gofastdfs:
   file:
     path: http://192.168.0.108:8080/
     group: group1
+

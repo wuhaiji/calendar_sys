@@ -67,5 +67,7 @@ public class HeartsWordsDto  {
 
     private Long month;
 
+    private String date;
+
 
 }

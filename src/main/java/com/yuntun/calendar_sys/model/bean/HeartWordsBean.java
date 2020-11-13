@@ -60,5 +60,10 @@ public class HeartWordsBean {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 创建日期
+     */
+    private Integer dayOfMonth;
+
 
 }

@@ -1,6 +1,7 @@
 package com.yuntun.calendar_sys.controller.wechat;
 
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -52,6 +53,12 @@ public class HeartWordsController {
     @Autowired
     IUserService iUserService;
 
+    /**
+     * 首页用户心语列表
+     *
+     * @param dto
+     * @return
+     */
     @GetMapping("/list")
     public Result<RowData<HeartWordsBean>> getHeartWordsList(HeartsWordsDto dto) {
 
@@ -66,7 +73,7 @@ public class HeartWordsController {
                         //只给用户看见审核通过的心语
                         .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
                         .eq(openId != null, "user_open_id", openId)
-                        .orderByDesc("id")
+                        .orderByDesc("create_time")
         );
 
         List<HeartWords> records = heartWordsIPage.getRecords();
@@ -88,6 +95,62 @@ public class HeartWordsController {
         return Result.ok(data);
     }
 
+    /**
+     * 具体某月的心语列表30条
+     */
+    @GetMapping("/list/limit30")
+    public Result<Object> getHeartWordsList30(HeartsWordsDto dto) {
+
+        ErrorUtil.isStringEmpty(dto.getDate(), "日期");
+
+        String openId = WechatOpenIdHolder.get();
+
+        LocalDateTime dateTimeStart = LocalDateTimeUtil.parse(dto.getDate());
+
+        //查询前15条
+        List<HeartWords> heartWordsListPrev = iHeartWordsService.list(
+                new QueryWrapper<HeartWords>()
+                        //只给用户看见审核通过的心语
+                        .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
+                        .eq(openId != null, "user_open_id", openId)
+                        .orderByDesc("create_time")
+                        .ge("create_time", dateTimeStart)
+                        .last("limit 15")
+
+        );
+        //查询后14条
+        List<HeartWords> heartWordsListNext = iHeartWordsService.list(
+                new QueryWrapper<HeartWords>()
+                        //只给用户看见审核通过的心语
+                        .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
+                        .eq(openId != null, "user_open_id", openId)
+                        .orderByDesc("create_time")
+                        .lt("create_time", dateTimeStart)
+                        .last("limit 14")
+
+        );
+        ArrayList<HeartWords> heartWords = new ArrayList<>();
+        heartWords.addAll(heartWordsListPrev);
+        heartWords.addAll(heartWordsListNext);
+        List<HeartWordsBean> collect = heartWords.parallelStream()
+                //过滤掉不属于当月的数据
+                .filter(i -> i.getCreateTime().getMonthValue() == (dateTimeStart.getMonthValue()))
+                .map(i -> {
+                    HeartWordsBean heartWordsBean = new HeartWordsBean();
+                    heartWordsBean.setId(i.getId());
+                    heartWordsBean.setImageUrl(i.getImageUrl());
+                    heartWordsBean.setCreateTime(i.getCreateTime());
+                    heartWordsBean.setDayOfMonth(i.getCreateTime().getDayOfMonth());
+                    BeanUtils.copyProperties(i, heartWordsBean);
+                    String content = i.getContent();
+                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
+                    heartWordsBean.setContentList(Arrays.asList(split));
+                    return heartWordsBean;
+                })
+                .collect(Collectors.toList());
+        return Result.ok(collect);
+    }
+
     @GetMapping("/list/months")
     public Result<RowData<JSONObject>> getHeartWordsListMonth(HeartsWordsDto dto) {
 
@@ -97,9 +160,10 @@ public class HeartWordsController {
                 //只给用户看见审核通过的心语
                 .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
                 .eq(openId != null, "user_open_id", openId)
-                .orderByDesc("id");
+                .orderByDesc("create_time");
 
         Long monthTimeStamp = dto.getMonth();
+        String date = dto.getDate();
         if (monthTimeStamp != null) {
             LocalDateTime dateTimeStart = LDTUtils.timestampToLocalDatetime(monthTimeStamp);
             log.info("要查询的月份：" + dateTimeStart);
@@ -109,6 +173,17 @@ public class HeartWordsController {
             queryWrapper.ge("create_time", start).lt("create_time", end);
         }
 
+        //指定月份
+        if (EptUtil.isNotEmpty(date)) {
+
+            LocalDateTime dateTimeStart = LocalDateTimeUtil.parse(date);
+            LocalDateTime dateTimeEnd = dateTimeStart.plus(1, ChronoUnit.MONTHS);
+
+            LocalDateTime start = dateTimeStart.with(TemporalAdjusters.firstDayOfMonth());
+            LocalDateTime end = dateTimeEnd.with(TemporalAdjusters.firstDayOfMonth());
+
+            queryWrapper.ge("create_time", start.toLocalDate()).lt("create_time", end.toLocalDate());
+        }
 
         IPage<HeartWords> heartWordsIPage = iHeartWordsService.page(
                 new Page<HeartWords>()
@@ -118,24 +193,31 @@ public class HeartWordsController {
         );
 
         List<HeartWords> records = heartWordsIPage.getRecords();
-        Map<Integer, List<HeartWordsBean>> collect = records.parallelStream().map(i -> {
-            String content = i.getContent();
-            HeartWordsBean heartWordsBean = new HeartWordsBean();
-            heartWordsBean.setId(i.getId());
-            heartWordsBean.setImageUrl(i.getImageUrl());
-            heartWordsBean.setCreateTime(i.getCreateTime());
-            return heartWordsBean;
-        })
-        .collect(Collectors.groupingBy(i -> i.getCreateTime().getMonthValue()))
-                ;
+        Map<Integer, List<HeartWordsBean>> collect = records.parallelStream()
+                .map(i -> {
+                    HeartWordsBean heartWordsBean = new HeartWordsBean();
+                    heartWordsBean.setId(i.getId());
+                    heartWordsBean.setImageUrl(i.getImageUrl());
+                    heartWordsBean.setCreateTime(i.getCreateTime());
+                    heartWordsBean.setDayOfMonth(i.getCreateTime().getDayOfMonth());
+                    BeanUtils.copyProperties(i, heartWordsBean);
+                    String content = i.getContent();
+                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
+                    heartWordsBean.setContentList(Arrays.asList(split));
+                    return heartWordsBean;
+                })
+                .collect(Collectors.groupingBy(i -> i.getCreateTime().getMonthValue()));
 
-        List<JSONObject> list = collect.entrySet().parallelStream().map(i -> {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("rows", i.getValue());
-            jsonObject.put("month", i.getKey() + "月");
-            return jsonObject;
-        }).collect(Collectors.toList());
+        List<JSONObject> list = collect.entrySet().parallelStream()
+                .map(i -> {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("rows", i.getValue());
+                    jsonObject.put("month", i.getKey());
+                    return jsonObject;
+                }).collect(Collectors.toList());
+
         Collections.reverse(list);
+
         RowData<JSONObject> data = RowData.of(JSONObject.class)
                 .setRows(list)
                 .setTotal(heartWordsIPage.getTotal())
@@ -144,23 +226,20 @@ public class HeartWordsController {
     }
 
     public static void main(String[] args) {
-        String sss = "234@#@sdf@#@";
-        String substring = sss.substring(0, sss.length() - 3);
-        System.out.println(substring);
+
     }
 
     @PostMapping("/add")
     public Result<Object> add(@RequestBody HeartsWordsDto dto) {
 
+        List<String> content = dto.getContent();
 
         ErrorUtil.isStringEmpty(dto.getPicUrl(), "心语内容图片");
         ErrorUtil.isStringEmpty(dto.getImageUrl(), "心语概览图");
         ErrorUtil.isObjectNull(dto.getUserOpenId(), "用户id");
         ErrorUtil.isObjectNull(dto.getTempId(), "模板id");
-        List<String> content = dto.getContent();
         ErrorUtil.isListEmpty(content, "内容不能为空");
         ErrorUtil.isStringEmpty(dto.getSource(), "来源不能为空，用户自建的用用户的名称");
-
 
 
         //心语处成一句字符串
@@ -188,7 +267,9 @@ public class HeartWordsController {
             throw new ServiceException(HeartWordsCode.ADD_HEART_WORDS_ERROR);
         }
         heartWords.setCreator(user.getId());
-
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println("心语创建时间:"+ now);
+        // heartWords.setCreateTime(now);
 
         //保存
         try {
