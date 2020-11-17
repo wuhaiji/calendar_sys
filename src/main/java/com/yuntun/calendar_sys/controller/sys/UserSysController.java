@@ -116,7 +116,6 @@ public class UserSysController {
     @PostMapping("/update")
     public Result<Object> update(User User) {
 
-        ErrorUtil.isObjectNull(User, "参数");
         ErrorUtil.isObjectNull(User.getId(), "角色id");
 
         try {

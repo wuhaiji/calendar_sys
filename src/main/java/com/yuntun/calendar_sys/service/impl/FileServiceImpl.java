@@ -3,10 +3,12 @@ package com.yuntun.calendar_sys.service.impl;
 import cn.hutool.core.io.resource.InputStreamResource;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.yuntun.calendar_sys.constant.FileConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.FileCode;
 import com.yuntun.calendar_sys.properties.GoFastDFSProperties;
 import com.yuntun.calendar_sys.service.FileService;
+import com.yuntun.calendar_sys.util.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +46,7 @@ public class FileServiceImpl implements FileService {
     public String goFastDFSUploadFile(MultipartFile file) {
         try {
             String filename = file.getOriginalFilename();
+            log.info("filename:"+filename);
             String newName = "";
             if (filename != null) {
                 newName = UUID.randomUUID() + filename.substring(filename.lastIndexOf("."));
@@ -58,8 +61,11 @@ public class FileServiceImpl implements FileService {
             JSONObject jsonObject = JSONObject.parseObject(resp);
             System.out.println(resp);
             String path = jsonObject.getJSONObject("data").getString("path");
-            log.info("path:{}",path);
-            return path;
+            //path存起来，用于以后清除无用文件
+            RedisUtils.listPush("gofastdfs_file_path", path);
+            String src = goFastDFSProperties.getHost() + path+ FileConstant.DOWNLOAD_0;
+            log.info("src:{}",src);
+            return src;
 
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -71,13 +77,18 @@ public class FileServiceImpl implements FileService {
     public void goFastDFSDeleteFile(String path) {
         Map<String, Object> params = new HashMap<>(6);
         params.put("path", path);
-        String res = HttpUtil.post(goFastDFSProperties.path + goFastDFSProperties.group + "/delete", params);
-        //log.info("resp:{}",res);
+        String res = null;
+        try {
+            res = HttpUtil.post(goFastDFSProperties.path + goFastDFSProperties.group + "/delete", params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("文件删除异常");
+        }
+        log.info("resp:{}",res);
         JSONObject jsonObject = JSONObject.parseObject(res);
         if (!"ok".equals(jsonObject.getString("status"))) {
             log.error("goFastDFS 文件删除异常");
             throw new ServiceException(FileCode.FILE_DELETE_ERROR);
         }
-
     }
 }

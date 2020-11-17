@@ -1,7 +1,6 @@
 package com.yuntun.calendar_sys.controller.sys;
 
 import com.alibaba.fastjson.JSONObject;
-import com.yuntun.calendar_sys.constant.FileConstant;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.properties.GoFastDFSProperties;
 import com.yuntun.calendar_sys.service.FileService;
@@ -28,8 +27,6 @@ public class FileUploadSysController {
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
     @Autowired
     private FileService fileService;
-    @Autowired
-    private GoFastDFSProperties goFastDFSProperties;
 
     /**
      * 文件上传
@@ -38,13 +35,9 @@ public class FileUploadSysController {
      * @return 文件路径
      */
     @PostMapping("/upload")
-    public Result<Object> goFastDFSUploadFile(@RequestBody MultipartFile file) {
+    public Result<Object> goFastDFSUploadFile(MultipartFile file) {
         String data = fileService.goFastDFSUploadFile(file);
-        return Result.ok(
-                goFastDFSProperties.path.substring(0, goFastDFSProperties.path.length() - 1)
-                        + data
-                        + FileConstant.DOWNLOAD_0
-        );
+        return Result.ok(data);
     }
 
     /**
@@ -58,7 +51,7 @@ public class FileUploadSysController {
         String base64Data = file.getString("file");
         MultipartFile multipartFile = Base64DecodeMultipartFile.base64ToMultipartFile(base64Data);
         String data = fileService.goFastDFSUploadFile(multipartFile);
-        return Result.ok(goFastDFSProperties.path.substring(0, goFastDFSProperties.path.length() - 1) + data + FileConstant.DOWNLOAD_0);
+        return Result.ok(data);
     }
 
 

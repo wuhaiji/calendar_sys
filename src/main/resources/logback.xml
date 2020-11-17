@@ -1,36 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-    <!--logback启动时，会打印它检查了哪些配置、看见了哪些配置，这些信息有时是必须关掉的。将状态信息监听器设置为无操作监听器。-->
-    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <!--关闭logback加载配置日志-->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
     <!-- 定义控制台的日志规则 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
-            <pattern>
-                %cyan(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %magenta(%logger) - %(%msg%n)
-            </pattern>
+            <pattern>%cyan(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %magenta(%logger-%method) - %(%msg%n)</pattern>
         </encoder>
     </appender>
 
-    <!-- 定义文件的日志规则 -->
-    <!-- 按照每天生成日志文件 -->
+    <!--每天生成一个日志文件，保存15天的日志文件。rollingFile是用来切分文件的 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!--日志文件输出的文件名-->
-            <fileNamePattern>logs/ty/platform/%d{yyyy-MM}/%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>
+                /logs/%d{yyyy-MM}/%d{yyyy-MM-dd}.%i.log
+            </fileNamePattern>
+            <!-- keep 15 days' worth of history -->
+            <maxHistory>15</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- 日志文件的最大大小 -->
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder>
-            <pattern>
-                %cyan(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %magenta(%logger) - %(%msg%n)
-            </pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
         </encoder>
     </appender>
+    <!-- project default level -->
+    <logger name="com.yuntun" level="INFO" />
 
-
-    <!-- 全局日志输出 -->
+    <!-- 日志输出级别 常用的日志级别按照从高到低依次为：ERROR、WARN、INFO、DEBUG。 -->
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <!-- 开发环境不需要配置错误文件日志信息规则 -->
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
     </root>
 </configuration>

@@ -1,5 +1,5 @@
 server:
-  port: 10000
+  port: 30000
   undertow:
     max-http-post-size: 100MB
 #  servlet:
@@ -50,4 +50,13 @@ gofastdfs:
   file:
     path: http://192.168.0.108:8080/
     group: group1
+    host: http://192.168.0.108:8080
 
+wechat:
+  applets:
+    appid: wxf8d116cbcc57e86c
+    secret: a550c4503aaf60a8055e2f965494c3cb
+
+# 超级管理token
+admin:
+  token: whj

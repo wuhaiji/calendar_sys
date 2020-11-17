@@ -5,11 +5,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.SysUserCode;
+import com.yuntun.calendar_sys.properties.AdminProperties;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.JwtHelper;
 import com.yuntun.calendar_sys.util.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -29,7 +32,8 @@ import static com.yuntun.calendar_sys.constant.SysUserConstant.USER_TOKEN_REDIS_
 @Component
 public class SysLoginInterceptor implements HandlerInterceptor {
     private static final Logger log = LoggerFactory.getLogger(SysLoginInterceptor.class);
-
+    @Autowired
+    AdminProperties adminProperties;
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
@@ -43,7 +47,9 @@ public class SysLoginInterceptor implements HandlerInterceptor {
             throw new ServiceException(SysUserCode.NOT_LOGGED_IN);
         }
         //测试用，生产环境删除
-        if (jwtToken.equals("!@#")) {
+        if (jwtToken.equals(adminProperties.getToken())) {
+            //developer fixed token
+            UserIdHolder.set(1);
             return true;
         }
 

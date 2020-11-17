@@ -244,7 +244,7 @@ public class SysUserController {
         try {
             jwtToken = JwtHelper.generateJWT("" + targetUser.getId(), targetUser.getUsername(), userAgent);
             //存入redis
-            RedisUtils.setValueTimeout(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken), jwtToken, USER_TOKEN_REDIS_EXPIRE);
+            RedisUtils.setValueTimeoutSeconds(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken), jwtToken, USER_TOKEN_REDIS_EXPIRE);
         } catch (Exception e) {
             log.error("生成token异常:", e);
             throw new ServiceException(CommonCode.SERVER_ERROR);
@@ -290,7 +290,7 @@ public class SysUserController {
         String publicKey = map.get(RSAUtils.PUBLIC_KEY_STR);
         String privateKey = map.get(RSAUtils.PRIVATE_KEY_STR);
         //5分钟过期
-        RedisUtils.setValueTimeout(RSA_KEYPAIR_REDIS_KEY + publicKey, privateKey, 300_000);
+        RedisUtils.setValueTimeoutSeconds(RSA_KEYPAIR_REDIS_KEY + publicKey, privateKey, 300_000);
         return Result.ok(publicKey);
     }
 

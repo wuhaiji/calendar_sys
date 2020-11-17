@@ -104,6 +104,7 @@ public class ApiInterceptor extends HandlerInterceptorAdapter {
             reqTime = Long.parseLong(request.getAttribute("reqTime").toString());
         }
         sb.append("; 调用时间:" + (respTime - reqTime) + "ms");
+
         logger.info(sb.toString());
     }
 

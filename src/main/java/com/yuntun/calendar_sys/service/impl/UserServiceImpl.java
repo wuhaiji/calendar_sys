@@ -13,6 +13,7 @@ import com.yuntun.calendar_sys.model.bean.UserBean;
 import com.yuntun.calendar_sys.model.bean.WechatLoginBean;
 import com.yuntun.calendar_sys.model.code.UserCode;
 import com.yuntun.calendar_sys.model.dto.WechatLoginDto;
+import com.yuntun.calendar_sys.properties.WechatProperties;
 import com.yuntun.calendar_sys.service.IUserService;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.JwtHelper;
@@ -22,6 +23,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -48,10 +50,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
 
-    public static final String wechatLoginUrl = "https://api.weixin.qq.com/sns/jscode2session";
-    public static final String appid = "wx6c889de5602cdf0c";
-    public static final String secret = "f8499a4d5ce441267a07ab792086a08c";
-    public static final String grant_type = "authorization_code";
+    @Autowired
+    WechatProperties wechatProperties;
+
 
     @Override
     public UserBean getUserInfoMap(WechatLoginDto loginRequest) {
@@ -60,11 +61,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         WechatLoginBean wechatLoginBean;
         try {
             HashMap<String, Object> paramMap = new HashMap<>();
-            paramMap.put("appid", appid);
-            paramMap.put("secret", secret);
-            paramMap.put("grant_type", grant_type);
+            paramMap.put("appid", wechatProperties.getAppid());
+            paramMap.put("secret", wechatProperties.getSecret());
+            paramMap.put("grant_type", wechatProperties.getGrant_type());
             paramMap.put("js_code", loginRequest.getCode());
-            String body = HttpUtil.get(wechatLoginUrl, paramMap);
+            String body = HttpUtil.get(wechatProperties.getWechatLoginUrl(), paramMap);
             log.info("微信登录返回信息：{}", body);
             wechatLoginBean = JSONObject.parseObject(body, WechatLoginBean.class);
         } catch (Exception e) {
@@ -122,6 +123,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         BeanUtils.copyProperties(insertOrUpdateUser, userBean);
         //设置token
         userBean.setToken(wechatToken);
+        RedisUtils.setValueTimeoutSeconds("wechat_token:" + userBean.getOpenId(), wechatToken, 3600);
         return userBean;
     }
 

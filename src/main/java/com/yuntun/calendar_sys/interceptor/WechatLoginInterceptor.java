@@ -5,11 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.CommonCode;
 import com.yuntun.calendar_sys.model.code.UserCode;
+import com.yuntun.calendar_sys.properties.AdminProperties;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.JwtHelper;
 import com.yuntun.calendar_sys.util.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -41,6 +43,9 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
      */
     public static final int LIMIT_FREQUENCY_IN_10_SECONDS = 1;
 
+    @Autowired
+    AdminProperties adminProperties;
+
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
@@ -56,8 +61,11 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
         //接口限次数,同一个token不能频繁请求
         // checkRequestFrequency(jwt, httpServletRequest.getServletPath());
 
-        if (jwt.equals("!@#"))
+        if (jwt.equals(adminProperties.getToken())) {
+            //developer fixed token
+            WechatOpenIdHolder.set("oybhQ5Wo7bya3EVC8GebTFtj9NeY");
             return true;
+        }
 
         //校验jwt是否有效,有效则返回json信息，无效则返回空
         JSONObject retJson = JwtHelper.validateLogin(jwt);
@@ -76,6 +84,7 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
 
     /**
      * 检查浏览器信息
+     *
      * @param httpServletRequest
      * @param retJson
      */
@@ -103,7 +112,7 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
         String apiLimitingKey = API_LIMITING + servletPath + SecureUtil.md5(jwt);
         Integer requestFrequency = (Integer) RedisUtils.getValue(apiLimitingKey);
         if (requestFrequency == null) {
-            RedisUtils.setValueTimeout(apiLimitingKey, 1, API_LIMITING_TIMEOUT);
+            RedisUtils.setValueTimeoutSeconds(apiLimitingKey, 1, API_LIMITING_TIMEOUT);
         } else {
             if (requestFrequency >= LIMIT_FREQUENCY_IN_10_SECONDS) {
                 throw new ServiceException(CommonCode.FREQUENT_OPERATION);
@@ -113,7 +122,7 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
             Long expireTime = RedisUtils.getExpireTimeTTl(apiLimitingKey);
             System.out.println("剩余时间:" + expireTime);
             if (expireTime != null) {
-                RedisUtils.setValueTimeout(apiLimitingKey, value, expireTime);
+                RedisUtils.setValueTimeoutSeconds(apiLimitingKey, value, expireTime);
             }
 
         }

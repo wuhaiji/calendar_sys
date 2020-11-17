@@ -1,11 +1,10 @@
 package com.yuntun.calendar_sys.controller.wechat;
 
 import com.alibaba.fastjson.JSONObject;
-import com.yuntun.calendar_sys.constant.FileConstant;
 import com.yuntun.calendar_sys.model.response.Result;
-import com.yuntun.calendar_sys.properties.GoFastDFSProperties;
 import com.yuntun.calendar_sys.service.FileService;
 import com.yuntun.calendar_sys.util.Base64DecodeMultipartFile;
+import com.yuntun.calendar_sys.util.ErrorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,6 @@ public class FileUploadController {
 
     @Autowired
     private FileService fileService;
-    @Autowired
-    private GoFastDFSProperties goFastDFSProperties;
 
     /**
      * 文件上传
@@ -39,13 +36,10 @@ public class FileUploadController {
      * @return 文件路径
      */
     @PostMapping("/upload")
-    public Result<Object> goFastDFSUploadFile(@RequestBody MultipartFile file) {
+    public Result<Object> goFastDFSUploadFile(MultipartFile file) {
+        ErrorUtil.isObjectNull(file,"文件");
         String data = fileService.goFastDFSUploadFile(file);
-        return Result.ok(
-                goFastDFSProperties.path.substring(0, goFastDFSProperties.path.length() - 1)
-                        + data
-                        + FileConstant.DOWNLOAD_0
-        );
+        return Result.ok(data);
     }
 
     /**
@@ -56,13 +50,11 @@ public class FileUploadController {
      */
     @PostMapping("/upload/base64")
     public Result<Object> goFastDFSUploadFile(@RequestBody JSONObject file) {
+        log.info("文件上传内容{}", file);
         String base64Data = file.getString("file");
         MultipartFile multipartFile = Base64DecodeMultipartFile.base64ToMultipartFile(base64Data);
         String data = fileService.goFastDFSUploadFile(multipartFile);
-        return Result.ok(
-                goFastDFSProperties.path.substring(0, goFastDFSProperties.path.length() - 1)
-                        + data
-                        + FileConstant.DOWNLOAD_0);
+        return Result.ok(data);
     }
 
     /**
@@ -72,6 +64,7 @@ public class FileUploadController {
      */
     @RequestMapping("/delete")
     public Result<Object> goFastDFSDeleteFile(@RequestParam String path) {
+        ErrorUtil.isStringEmpty(path,"文件路径");
         fileService.goFastDFSDeleteFile(path);
         return Result.ok();
     }

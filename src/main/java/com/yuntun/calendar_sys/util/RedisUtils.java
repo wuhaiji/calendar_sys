@@ -147,8 +147,7 @@ public class RedisUtils {
      * @param value   值
      * @param timeout 有效期，单位秒
      */
-    public static void setValueTimeout(final String key, final Object value, final long timeout) {
-
+    public static void setValueTimeoutSeconds(final String key, final Object value, final long timeout) {
         redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
     }
 
@@ -159,7 +158,7 @@ public class RedisUtils {
      * @param value   值
      * @param timeout 有效期，单位秒
      */
-    public static void setValueTimeout(final String key, final Object value, final long timeout, TimeUnit timeUnit) {
+    public static void setValueTimeoutSeconds(final String key, final Object value, final long timeout, TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(key, value, timeout, timeUnit);
     }
 

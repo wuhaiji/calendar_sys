@@ -68,7 +68,7 @@ public class UserController {
 
     @PostMapping("/delete/{id}")
     public Result<Object> delete(@PathVariable("id") Integer id) {
-        ErrorUtil.isObjectNull(id, "信息id");
+        ErrorUtil.isObjectNull(id, "用户id");
         try {
             boolean b = iUserService.removeById(id);
             if (b)
@@ -90,21 +90,4 @@ public class UserController {
 
     }
 
-    public static void main(String[] args) {
-        WechatLoginDto wechatLoginDto = new WechatLoginDto();
-        wechatLoginDto.setCode("");
-        wechatLoginDto.setEncryptedData("...");
-        wechatLoginDto.setIv("...");
-        wechatLoginDto.setSignature("...");
-
-        WechatLoginDto.UserInfo userInfo = new WechatLoginDto.UserInfo();
-        userInfo.setAvatarUrl("头像地址");
-        userInfo.setCity("城市");
-        userInfo.setCountry("国家");
-        userInfo.setProvince("省");
-        userInfo.setGender(1);
-        userInfo.setNickName("昵称");
-        wechatLoginDto.setUserInfo(userInfo);
-        System.out.println(JSON.toJSON(wechatLoginDto));
-    }
 }

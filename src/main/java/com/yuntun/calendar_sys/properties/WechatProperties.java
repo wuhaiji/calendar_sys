@@ -1,7 +1,6 @@
 package com.yuntun.calendar_sys.properties;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -13,14 +12,13 @@ import org.springframework.stereotype.Component;
  * @author whj
  * @since 2020/11/10
  */
-@ConfigurationProperties(prefix = "gofastdfs.file")
+@ConfigurationProperties(prefix = "wechat.applets")
 @Component
 @Data
-public class GoFastDFSProperties {
-    public String path;
-    public String group;
-    /**
-     * 文件访问host
-     */
-    public String host;
+public class WechatProperties {
+
+    String grant_type = "authorization_code";
+    String wechatLoginUrl = "https://api.weixin.qq.com/sns/jscode2session";
+    String appid;
+    String secret;
 }

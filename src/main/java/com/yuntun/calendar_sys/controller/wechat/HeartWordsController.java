@@ -242,7 +242,7 @@ public class HeartWordsController {
         ErrorUtil.isStringEmpty(dto.getSource(), "来源不能为空，用户自建的用用户的名称");
 
 
-        //心语转为一句字符串
+        //心语转为一句字符串,用"@#@"分隔
         HeartWords heartWords = new HeartWords();
         BeanUtils.copyProperties(dto, heartWords);
         StringBuilder stringBuilder = new StringBuilder();
@@ -252,14 +252,17 @@ public class HeartWordsController {
         String substring = stringBuilder.substring(0, stringBuilder.length() - HeartWordsConstant.CONTENT_DELIMITER.length());
         heartWords.setContent(substring);
 
-
+        String openId = WechatOpenIdHolder.get();
+        log.info("openId:{}", openId);
+        if (EptUtil.isEmpty(openId)) {
+            throw new ServiceException("获取openId异常");
+        }
         //查询用户id
         User user = iUserService.getOne(
                 new QueryWrapper<User>()
                         .eq(
-                                EptUtil.isEmpty(WechatOpenIdHolder.get()),
                                 "open_id",
-                                WechatOpenIdHolder.get()
+                                openId
                         )
         );
 
@@ -268,7 +271,7 @@ public class HeartWordsController {
         }
         heartWords.setCreator(user.getId());
         LocalDateTime now = LocalDateTime.now();
-        System.out.println("心语创建时间:"+ now);
+        System.out.println("心语创建时间:" + now);
         heartWords.setCreateTime(now);
 
         //保存

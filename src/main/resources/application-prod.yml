@@ -1,0 +1,61 @@
+server:
+  port: 30000
+  undertow:
+    max-http-post-size: 100MB
+#  servlet:
+#    context-path: /calendar-sys
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
+      # 设置文件缓存的临界点,超过则先保存到临时目录,默认为0,所有文件都会进行缓存
+      file-size-threshold: 0
+  application:
+    name: calendar_sys
+  jackson:
+    # springboot响应json null值过滤
+    default-property-inclusion: non_null
+  # 数据库
+  datasource:
+    username: root
+    password: YT0864
+    url: jdbc:mysql://mysql8:3306/cl_mini_app?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 3
+      max-active: 10
+      max-wait: 50000
+      keep-alive-between-time-millis: 50000
+      keep-alive: false
+  redis:
+    database: 0
+    host: redis
+    port: 6379
+    timeout: 5000
+    password:
+
+# sql 打印
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted  # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+gofastdfs:
+  file:
+    path: http://file.venton.cn:8080/
+    group: group1
+    host: https://file.venton.cn
+wechat:
+  applets:
+    appid: wxf8d116cbcc57e86c
+    secret: a550c4503aaf60a8055e2f965494c3cb
+# 超级管理token
+admin:
+  token: whj
+

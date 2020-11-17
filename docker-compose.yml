@@ -1,0 +1,84 @@
+version: "3"
+
+services:
+  mysql8:
+    # 配置docker容器日志文件
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    container_name: heart-words-mysql
+    image: mysql:8.0.20
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: YT0864
+      TZ: Asia/Shanghai
+    volumes:
+      - /home/heart-words/mysql/data:/var/lib/mysql
+      - /home/heart-words/mysql/my.conf:/etc/mysql/my.cnf
+    ports:
+      - 3306:3306
+    networks:
+      - heart-words
+
+  redis:
+    # 配置docker容器日志文件
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    image: redis
+    container_name: heart-words-redis
+    privileged: true #是否让docker 应用容器 获取宿主机root权限（特殊权限）
+    ports:
+      - 6379:6379
+    restart: always
+    networks:
+      - heart-words
+    volumes:
+      - /home/heart-words/redis/data:/data
+      - /home/heart-words/redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  app:
+    # 配置docker容器日志文件
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+        max-file: "3"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: heart-words-app
+    container_name: heart-words-app
+    privileged: true
+    mem_limit: 512m
+    # MaxRAMPercentage=80.0:设置jvm使用容器最大内存(mem_limit)的80%
+    entrypoint: [
+        "java",
+        "-server",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseCGroupMemoryLimitForHeap",
+        "-XX:MaxRAMPercentage=80.0",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+        "-XX:HeapDumpPath=/logs/HeapDump",
+        "-jar",
+        "/app.jar"
+    ]
+    command: mkdir /logs && mkdir /logs/HeapDump
+    expose:
+      - 10000:10000
+    restart: always
+    networks:
+      - heart-words
+    volumes:
+      - /home/heart-words/app/logs:/logs
+    depends_on:
+      - redis
+      - mysql8
+
+networks:
+  heart-words:
+    external: true
