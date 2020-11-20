@@ -34,8 +34,7 @@ public class RedisUtils {
      * @param timeout 超时时间
      * @return true=设置成功；false=设置失败
      */
-    public static boolean expire(final String key, final long timeout) {
-
+    public static boolean expireSeconds(final String key, final long timeout) {
         return expire(key, timeout, TimeUnit.SECONDS);
     }
 

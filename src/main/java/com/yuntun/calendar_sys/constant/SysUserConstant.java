@@ -17,12 +17,12 @@ public interface SysUserConstant {
     /**
      * 密匙对redis中的key
      */
-    String RSA_KEYPAIR_REDIS_KEY = "login_keypair";
+    String RSA_KEYPAIR_REDIS_KEY = "hw_login_keypair:";
 
     /**
      * 用户token放在redis中的key
      */
-    String USER_TOKEN_REDIS_KEY = "user_token:";
+    String USER_TOKEN_REDIS_KEY = "hw_user_token:";
 
 
     /**

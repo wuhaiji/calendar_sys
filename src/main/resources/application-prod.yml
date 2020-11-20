@@ -51,10 +51,18 @@ gofastdfs:
     path: http://file.venton.cn:8080/
     group: group1
     host: https://file.venton.cn
+# 徐
 wechat:
   applets:
     appid: wxf8d116cbcc57e86c
     secret: a550c4503aaf60a8055e2f965494c3cb
+
+# 胡
+#wechat:
+#  applets:
+#    appid: wx6c889de5602cdf0c
+#    secret: 78907705f67f4a6632a2f471f303114a
+
 # 超级管理token
 admin:
   token: whj

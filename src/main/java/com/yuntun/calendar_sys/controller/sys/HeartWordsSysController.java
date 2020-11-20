@@ -9,6 +9,7 @@ import com.yuntun.calendar_sys.entity.HeartWords;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.bean.HeartWordsBean;
 import com.yuntun.calendar_sys.model.code.HeartWordsCode;
+import com.yuntun.calendar_sys.model.dto.HeartsBatchWordsDto;
 import com.yuntun.calendar_sys.model.dto.HeartsWordsDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
@@ -49,16 +50,22 @@ public class HeartWordsSysController {
         ErrorUtil.isNumberValueLt(pageSize, 0, "pageSize");
         ErrorUtil.isNumberValueLt(pageNo, 0, "pageNo");
 
-        IPage<HeartWords> HeartWordsIPage = iHeartWordsService.page(
-                new Page<HeartWords>()
-                        .setSize(pageSize)
-                        .setCurrent(pageNo),
-                new QueryWrapper<HeartWords>()
-                        .eq(EptUtil.isNotEmpty(dto.getUserOpenId()), "user_open_id", dto.getUserOpenId())
-                        .eq(EptUtil.isNotEmpty(dto.getTempId()), "temp_id", dto.getTempId())
-                        .eq(EptUtil.isNotEmpty(dto.getCreateTime()), "create_time", dto.getCreateTime())
-                        .orderByDesc("id")
-        );
+        IPage<HeartWords> HeartWordsIPage = null;
+        try {
+            HeartWordsIPage = iHeartWordsService.page(
+                    new Page<HeartWords>()
+                            .setSize(pageSize)
+                            .setCurrent(pageNo),
+                    new QueryWrapper<HeartWords>()
+                            .eq(EptUtil.isNotEmpty(dto.getUserOpenId()), "user_open_id", dto.getUserOpenId())
+                            .eq(EptUtil.isNotEmpty(dto.getTempId()), "temp_id", dto.getTempId())
+                            .eq(EptUtil.isNotEmpty(dto.getCreateTime()), "create_time", dto.getCreateTime())
+                            .orderByDesc("id")
+            );
+        } catch (Exception e) {
+            log.error("Exception", e);
+            throw new ServiceException(HeartWordsCode.LIST_ERROR);
+        }
 
         List<HeartWordsBean> heartWordsBeanList = HeartWordsIPage.getRecords()
                 .parallelStream()
@@ -75,13 +82,13 @@ public class HeartWordsSysController {
                 .setRows(heartWordsBeanList)
                 .setTotal(HeartWordsIPage.getTotal())
                 .setTotalPages(HeartWordsIPage.getTotal());
-        log.info("心语集合：{}", data);
         return Result.ok(data);
     }
 
 
     @PostMapping("/update")
     public Result<Object> update(HeartsWordsDto heartsWordsDto) {
+
         ErrorUtil.isObjectNull(heartsWordsDto.getId(), "心语id不能为空");
         HeartWords heartWords = new HeartWords();
         BeanUtils.copyProperties(heartsWordsDto, heartWords);
@@ -104,15 +111,42 @@ public class HeartWordsSysController {
             throw new Exception();
         } catch (Exception e) {
             log.error("Exception", e);
-            throw new ServiceException(HeartWordsCode.UPDATE_SYSUSER_ERROR);
+            throw new ServiceException(HeartWordsCode.UPDATE_ERROR);
         }
     }
 
     @PostMapping("/delete/{id}")
     public Result<Object> delete(@PathVariable("id") Integer id) {
         ErrorUtil.isObjectNull(id, "信息id");
-        boolean b = iHeartWordsService.removeById(id);
-        if (b) return Result.ok();
-        return Result.error("删除失败");
+        boolean b;
+        try {
+            b = iHeartWordsService.removeById(id);
+            if (b) return Result.ok();
+            return Result.error("删除失败");
+        } catch (Exception e) {
+            log.error("Exception", e);
+            throw new ServiceException(HeartWordsCode.DELETE_ERROR);
+        }
+
+    }
+
+    @PostMapping("/batch/update")
+    public Result<Object> batchReview(HeartsBatchWordsDto dto) {
+
+        ErrorUtil.isObjectNull(dto.getIds(), "心语集合");
+        ErrorUtil.isObjectNull(dto.getDisable(), "心语审核状态");
+
+        List<HeartWords> heartWords = dto.getIds().parallelStream()
+                .map(i -> new HeartWords().setId(i).setDisable(dto.getDisable()))
+                .collect(Collectors.toList());
+        boolean b;
+        try {
+            b = iHeartWordsService.updateBatchById(heartWords);
+            if (b) return Result.ok();
+            return Result.error("审核失败");
+        } catch (Exception e) {
+            log.error("Exception", e);
+            throw new ServiceException(HeartWordsCode.UPDATE_BATCH_ERROR);
+        }
     }
 }

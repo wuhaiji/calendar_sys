@@ -72,7 +72,7 @@ public class HeartWordsController {
                 new QueryWrapper<HeartWords>()
                         //只给用户看见审核通过的心语
                         .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
-                        .eq(openId != null, "user_open_id", openId)
+                        // .eq(openId != null, "user_open_id", openId)
                         .orderByDesc("create_time")
         );
 
@@ -267,7 +267,7 @@ public class HeartWordsController {
         );
 
         if (user == null) {
-            throw new ServiceException(HeartWordsCode.ADD_HEART_WORDS_ERROR);
+            throw new ServiceException(HeartWordsCode.ADD_ERROR);
         }
         heartWords.setCreator(user.getId());
         LocalDateTime now = LocalDateTime.now();
@@ -290,7 +290,7 @@ public class HeartWordsController {
             throw new Exception();
         } catch (Exception e) {
             log.error("Exception", e);
-            throw new ServiceException(HeartWordsCode.ADD_HEART_WORDS_ERROR);
+            throw new ServiceException(HeartWordsCode.ADD_ERROR);
         }
 
     }
@@ -302,4 +302,6 @@ public class HeartWordsController {
         if (b) return Result.ok();
         return Result.error("删除失败");
     }
+
+
 }

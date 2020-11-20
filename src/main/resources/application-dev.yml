@@ -52,10 +52,19 @@ gofastdfs:
     group: group1
     host: http://192.168.0.108:8080
 
+# 徐
 wechat:
   applets:
     appid: wxf8d116cbcc57e86c
     secret: a550c4503aaf60a8055e2f965494c3cb
+
+
+## 胡
+#wechat:
+#  applets:
+#    appid: wx6c889de5602cdf0c
+#    secret: 78907705f67f4a6632a2f471f303114a
+
 
 # 超级管理token
 admin:

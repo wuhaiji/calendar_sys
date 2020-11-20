@@ -24,7 +24,7 @@ import java.util.HashMap;
 @ControllerAdvice
 public class ExceptionCatch {
 
-    private static final Logger log = LoggerFactory.getLogger(ExceptionCatch.class);
+    private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
     /**
      * 已知异常类型map
      */
@@ -36,7 +36,7 @@ public class ExceptionCatch {
 
     @ExceptionHandler(ServiceException.class)
     @ResponseBody
-    public Result<Object> customException(ServiceException e) {
+    public Result<Object> ServiceException(ServiceException e) {
         log.error("ServiceException:{}", e.getMsg());
         e.printStackTrace();
         return Result.error(e.getCode(), e.getMsg());
@@ -45,7 +45,7 @@ public class ExceptionCatch {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseBody
     public Result<Object> HttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
-        log.error("ServiceException:", e);
+        log.error("HttpRequestMethodNotSupportedException:", e);
         return Result.error(CommonCode.METHOD_NOT_SUPPORT.getCode(), e.getMessage());
     }
 

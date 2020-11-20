@@ -2,7 +2,6 @@ package com.yuntun.calendar_sys.interceptor;
 
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.yuntun.calendar_sys.constant.JwtConstant;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.model.code.SysUserCode;
 import com.yuntun.calendar_sys.properties.AdminProperties;
@@ -12,7 +11,6 @@ import com.yuntun.calendar_sys.util.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -37,7 +35,8 @@ public class SysLoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
-
+        if(httpServletRequest.getServletPath().startsWith("/error"))
+            return true;
         //首先从请求头中获取jwt串，与页面约定好存放jwt值的请求头属性名为user-token
         String jwtToken = httpServletRequest.getHeader(JWT_TOKEN_HEADER_KEY);
         log.debug("[sys登录校验拦截器]-jwtToken:{}", jwtToken);
@@ -75,7 +74,7 @@ public class SysLoginInterceptor implements HandlerInterceptor {
         //将客户Id设置到threadLocal中,方便以后使用
         UserIdHolder.set(userId);
         // 重置redis中token过期时间
-        RedisUtils.expire(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken), USER_TOKEN_REDIS_EXPIRE);
+        RedisUtils.expireSeconds(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken), USER_TOKEN_REDIS_EXPIRE);
         return true;
     }
 

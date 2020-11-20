@@ -50,19 +50,9 @@ public class Temp implements Serializable {
     private String tempSource;
 
     /**
-     * 阳历
+     * 模板内容引用来源
      */
-    private String publishTime;
-
-    /**
-     * 星期
-     */
-    private String weekDay;
-
-    /**
-     * 农历
-     */
-    private String lunarCalendar;
+    private Integer tempId;
 
     /**
      * 创建时间
@@ -72,7 +62,7 @@ public class Temp implements Serializable {
     /**
      * 创建者管理员id
      */
-    private Integer creatorId;
+    private Integer creator;
 
     /**
      * 修改时间
@@ -82,7 +72,7 @@ public class Temp implements Serializable {
     /**
      * 修改者管理员id
      */
-    private Integer updatorId;
+    private Integer updator;
 
     /**
      * 删除状态 0.未删除 1.删除
@@ -97,7 +87,7 @@ public class Temp implements Serializable {
     /**
      * 删除者管理员id
      */
-    private Integer deletorId;
+    private Integer deletedBy;
 
 
 }

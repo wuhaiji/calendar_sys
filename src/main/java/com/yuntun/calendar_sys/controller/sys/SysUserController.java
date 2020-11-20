@@ -140,13 +140,16 @@ public class SysUserController {
     }
 
     @PostMapping("/update")
-    public Result<Object> update(SysUserDto sysUserDto) {
+    public Result<Object> update(SysUserDto sysUserDto,String publickey) {
 
-        ErrorUtil.isObjectNull(sysUserDto, "参数");
         ErrorUtil.isObjectNull(sysUserDto.getId(), "角色id");
+        ErrorUtil.isStringEmpty(publickey, "公钥");
+
+        String passwordDecrypt = getPasswordDecrypt(sysUserDto.getPassword(), publickey);
 
         SysUser sysUser = new SysUser();
         BeanUtils.copyProperties(sysUserDto, sysUser);
+        sysUser.setPassword(SecureUtil.md5(passwordDecrypt));
         try {
             boolean save = iSysUserService.updateById(sysUser);
             if (save)
@@ -157,6 +160,43 @@ public class SysUserController {
             throw new ServiceException(SysUserCode.UPDATE_SYSUSER_FAILURE);
         }
 
+    }
+
+    @PostMapping("/password/update")
+    public Result<Object> update(String username,String oldPassword,String newPassword,String publickey) {
+
+        ErrorUtil.isStringEmpty(username, "用户名");
+
+        ErrorUtil.isStringEmpty(publickey, "公钥");
+
+        //先查询用户是否存在
+        SysUser targetSysUser = iSysUserService.getOne(new QueryWrapper<SysUser>().eq("username", username));
+        if(targetSysUser==null){
+            log.error("用户不存在");
+            throw new ServiceException(SysUserCode.LOGIN_FAILED_USERNAME_INCORRECT);
+        }
+
+        //判断旧密码是否正确
+        String oldPasswordDecrypt = SecureUtil.md5(getPasswordDecrypt(oldPassword, publickey));
+        if(!targetSysUser.getPassword().equals(oldPasswordDecrypt)){
+            log.error("密码不正确");
+            throw new ServiceException(SysUserCode.LOGIN_FAILED_PASSWORD_INCORRECT);
+        }
+
+        //解密新密码
+        String newPasswordDecrypt = getPasswordDecrypt(newPassword, publickey);
+        ErrorUtil.isStringLengthOutOfRange(newPasswordDecrypt,6,16, "新密码");
+        String newPasswordMd5 = SecureUtil.md5(newPasswordDecrypt);
+        targetSysUser.setPassword(newPasswordMd5);
+        try {
+            boolean save = iSysUserService.updateById(targetSysUser);
+            if (save)
+                return Result.ok();
+            return Result.error(SysUserCode.UPDATE_SYSUSER_FAILURE);
+        } catch (Exception e) {
+            log.error("异常:", e);
+            throw new ServiceException(SysUserCode.UPDATE_SYSUSER_FAILURE);
+        }
     }
 
     @PostMapping("/delete/{id}")
@@ -290,7 +330,7 @@ public class SysUserController {
         String publicKey = map.get(RSAUtils.PUBLIC_KEY_STR);
         String privateKey = map.get(RSAUtils.PRIVATE_KEY_STR);
         //5分钟过期
-        RedisUtils.setValueTimeoutSeconds(RSA_KEYPAIR_REDIS_KEY + publicKey, privateKey, 300_000);
+        RedisUtils.setValueTimeoutSeconds(RSA_KEYPAIR_REDIS_KEY + SecureUtil.md5(publicKey), privateKey, 300_000);
         return Result.ok(publicKey);
     }
 
@@ -303,7 +343,6 @@ public class SysUserController {
     @GetMapping("/captcha")
     public void captcha(HttpSession session, HttpServletResponse response) throws IOException {
         try {
-
             CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(200, 100, 4, 20);
             // 自定义验证码内容为四则运算方式
             circleCaptcha.setGenerator(new MathGenerator(1));
@@ -353,7 +392,7 @@ public class SysUserController {
      * @return
      */
     private String getPasswordDecrypt(String password, String publicKey) {
-        String privateKey = RedisUtils.getString(RSA_KEYPAIR_REDIS_KEY + publicKey);
+        String privateKey = RedisUtils.getString(RSA_KEYPAIR_REDIS_KEY + SecureUtil.md5(publicKey));
         if (privateKey == null) {
             throw new ServiceException(SysUserCode.LOGIN_FAILED_PUBLICKEY_INCORRECT);
         }

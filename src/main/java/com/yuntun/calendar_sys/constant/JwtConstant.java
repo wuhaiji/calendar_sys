@@ -26,7 +26,7 @@ public interface JwtConstant {
     /**
      * jwt过期时间
      */
-    int EXPIRE_SECOND = 24 * 3600_000;
+    int EXPIRE_Mill = 24 * 3600_000;
 
     /**
      * 用于JWT加密userId的密匙

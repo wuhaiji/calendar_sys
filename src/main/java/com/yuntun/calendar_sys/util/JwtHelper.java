@@ -51,7 +51,7 @@ public class JwtHelper {
         // 获取当前系统时间
         long nowTimeMillis = System.currentTimeMillis();
         // 添加Token过期时间
-        Date expDate = new Date(nowTimeMillis + JwtConstant.EXPIRE_SECOND);
+        Date expDate = new Date(nowTimeMillis + JwtConstant.EXPIRE_Mill);
         Date now = new Date(nowTimeMillis);
         //生成密匙
         // 将BASE64SECRET常量字符串使用base64解码成字节数组
