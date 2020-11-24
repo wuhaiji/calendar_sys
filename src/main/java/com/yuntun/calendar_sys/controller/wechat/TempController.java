@@ -63,6 +63,7 @@ public class TempController {
                             .setSize(pageSize)
                             .setCurrent(pageNo),
                     new QueryWrapper<Temp>()
+                            .le("publish_time", LocalDate.now())
                             .orderByDesc("create_time")
             );
         } catch (Exception e) {
@@ -90,7 +91,6 @@ public class TempController {
 
         QueryWrapper<Temp> queryWrapper = new QueryWrapper<Temp>()
                 .le("publish_time", LocalDate.now())
-                //只给用户看见审核通过的心语
                 .orderByDesc("create_time");
 
         //指定月份
