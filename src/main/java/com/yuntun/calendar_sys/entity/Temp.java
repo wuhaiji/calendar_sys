@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -53,6 +54,16 @@ public class Temp implements Serializable {
      * 模板内容引用来源
      */
     private Integer tempId;
+
+    /**
+     * 农历
+     */
+    private String lunar;
+
+    /**
+     * 心语发布时间
+     */
+    private LocalDate publishTime;
 
     /**
      * 创建时间

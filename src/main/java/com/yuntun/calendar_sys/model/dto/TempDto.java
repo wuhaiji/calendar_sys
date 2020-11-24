@@ -2,7 +2,9 @@ package com.yuntun.calendar_sys.model.dto;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -44,5 +46,8 @@ public class TempDto {
      * 布局模板id
      */
     private Integer tempId;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate publishTime;
 
 }

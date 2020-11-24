@@ -7,14 +7,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yuntun.calendar_sys.constant.HeartWordsConstant;
-import com.yuntun.calendar_sys.entity.HeartWords;
 import com.yuntun.calendar_sys.entity.Temp;
 import com.yuntun.calendar_sys.exception.ServiceException;
-import com.yuntun.calendar_sys.interceptor.WechatOpenIdHolder;
-import com.yuntun.calendar_sys.model.bean.HeartWordsBean;
 import com.yuntun.calendar_sys.model.bean.TempBean;
 import com.yuntun.calendar_sys.model.code.TempCode;
-import com.yuntun.calendar_sys.model.dto.HeartsWordsDto;
 import com.yuntun.calendar_sys.model.dto.TempDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
@@ -30,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -75,14 +72,8 @@ public class TempController {
 
         List<TempBean> tempBeanList = tempPage.getRecords()
                 .parallelStream()
-                .map(i -> {
-                    String content = i.getTempContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    TempBean tempBean = TempBean.of();
-                    BeanUtils.copyProperties(i, tempBean);
-                    tempBean.setTempContent(Arrays.asList(split));
-                    return tempBean;
-                }).collect(Collectors.toList());
+                .map(this::getTempBean)
+                .collect(Collectors.toList());
 
         RowData<TempBean> data = RowData.of(TempBean.class)
                 .setRows(tempBeanList)
@@ -98,6 +89,7 @@ public class TempController {
 
 
         QueryWrapper<Temp> queryWrapper = new QueryWrapper<Temp>()
+                .le("publish_time", LocalDate.now())
                 //只给用户看见审核通过的心语
                 .orderByDesc("create_time");
 
@@ -110,7 +102,10 @@ public class TempController {
             LocalDateTime start = dateTimeStart.with(TemporalAdjusters.firstDayOfMonth());
             LocalDateTime end = dateTimeEnd.with(TemporalAdjusters.firstDayOfMonth());
 
-            queryWrapper.ge("create_time", start.toLocalDate()).lt("create_time", end.toLocalDate());
+            queryWrapper
+                    .ge("create_time", start.toLocalDate())
+                    .lt("create_time", end.toLocalDate())
+            ;
         }
 
         Page<Temp> page = new Page<Temp>().setSize(pageSize).setCurrent(pageNo);
@@ -118,20 +113,13 @@ public class TempController {
         try {
             tempIPage = iTempService.page(page, queryWrapper);
         } catch (Exception e) {
-            log.error("Exception",e);
+            log.error("Exception", e);
             throw new ServiceException(TempCode.LIST_MONTH_FAILURE);
         }
 
         List<Temp> records = tempIPage.getRecords();
         Map<Integer, List<TempBean>> collect = records.parallelStream()
-                .map(i -> {
-                    String content = i.getTempContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    TempBean tempBean = TempBean.of();
-                    BeanUtils.copyProperties(i, tempBean);
-                    tempBean.setTempContent(Arrays.asList(split));
-                    return tempBean;
-                })
+                .map(this::getTempBean)
                 .collect(Collectors.groupingBy(i -> i.getCreateTime().getMonthValue()));
 
         List<JSONObject> list = collect.entrySet().parallelStream()
@@ -166,6 +154,7 @@ public class TempController {
                 new QueryWrapper<Temp>()
                         .orderByDesc("create_time")
                         .ge("create_time", dateTimeStart)
+                        .le("publish_time", LocalDate.now())
                         .last("limit 15")
 
         );
@@ -174,6 +163,7 @@ public class TempController {
                 new QueryWrapper<Temp>()
                         .orderByDesc("create_time")
                         .lt("create_time", dateTimeStart)
+                        .le("publish_time", LocalDate.now())
                         .last("limit 14")
 
         );
@@ -183,33 +173,37 @@ public class TempController {
         List<TempBean> collect = Temp.parallelStream()
                 //过滤掉不属于当月的数据
                 .filter(i -> i.getCreateTime().getMonthValue() == (dateTimeStart.getMonthValue()))
-                .map(i -> {
-                    String content = i.getTempContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    TempBean tempBean = TempBean.of();
-                    BeanUtils.copyProperties(i, tempBean);
-                    tempBean.setTempContent(Arrays.asList(split));
-                    return tempBean;
-                })
+                .map(this::getTempBean)
                 .collect(Collectors.toList());
         return Result.ok(collect);
     }
 
 
     @GetMapping("/detail/{id}")
-    public Result<Object> detail(@PathVariable("id") String id) {
+    public Result<Object> detail(@PathVariable("id") Integer id) {
 
-        ErrorUtil.isObjectNull(id, "参数");
+        ErrorUtil.isNumberValueLt(id, 0, "参数");
         try {
             Temp temp = iTempService.getById(id);
-            if (EptUtil.isNotEmpty(temp))
-                return Result.ok(temp);
-            return Result.error(TempCode.DELETE_TEMP_FAILURE);
+            if (EptUtil.isNotEmpty(temp)) {
+                TempBean tempBean = getTempBean(temp);
+                return Result.ok(tempBean);
+            }
+            return Result.error(TempCode.DETAIL_TEMP_FAILURE);
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("异常:", e);
             throw new ServiceException(TempCode.DELETE_TEMP_FAILURE);
         }
+    }
 
+    private TempBean getTempBean(Temp temp) {
+        TempBean tempBean = new TempBean();
+        String[] split = temp.getTempContent().split(HeartWordsConstant.CONTENT_DELIMITER);
+        BeanUtils.copyProperties(temp, tempBean);
+        tempBean.setTempContent(Arrays.asList(split));
+        tempBean.setCreateTime(temp.getPublishTime().atStartOfDay());
+        return tempBean;
     }
 
 }

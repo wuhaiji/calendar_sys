@@ -4,6 +4,8 @@ package com.yuntun.calendar_sys.model.response;
 import com.yuntun.calendar_sys.model.code.CommonCode;
 import com.yuntun.calendar_sys.model.code.ResultCode;
 
+import java.io.Serializable;
+
 /**
  * <p>
  * 通用请求返回对象
@@ -12,7 +14,7 @@ import com.yuntun.calendar_sys.model.code.ResultCode;
  * @author whj
  * @since 2020/9/8
  */
-public class Result<T> {
+public class Result<T> implements Serializable {
 
 
     /**

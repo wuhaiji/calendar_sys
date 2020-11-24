@@ -1,7 +1,10 @@
 package com.yuntun.calendar_sys.controller.sys;
 
 
+import cn.hutool.core.date.ChineseDate;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.date.chinese.LunarFestival;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -70,14 +73,7 @@ public class TempSysController {
 
         List<TempBean> tempBeanList = tempPage.getRecords()
                 .parallelStream()
-                .map(i -> {
-                    String content = i.getTempContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    TempBean tempBean = TempBean.of();
-                    BeanUtils.copyProperties(i, tempBean);
-                    tempBean.setTempContent(Arrays.asList(split));
-                    return tempBean;
-                }).collect(Collectors.toList());
+                .map(i -> getTempBean(i)).collect(Collectors.toList());
 
         RowData<TempBean> data = RowData.of(TempBean.class)
                 .setRows(tempBeanList)
@@ -87,14 +83,17 @@ public class TempSysController {
         return Result.ok(data);
     }
 
+
     @GetMapping("/detail/{id}")
     public Result<Object> detail(@PathVariable("id") String id) {
 
         ErrorUtil.isObjectNull(id, "参数");
         try {
             Temp temp = iTempService.getById(id);
-            if (EptUtil.isNotEmpty(temp))
-                return Result.ok(temp);
+            if (EptUtil.isNotEmpty(temp)){
+                TempBean tempBean = getTempBean(temp);
+                return Result.ok(tempBean);
+            }
             return Result.error(TempCode.DETAIL_TEMP_ID_DOES_NOT_EXIST);
         } catch (Exception e) {
             log.error("异常:", e);
@@ -110,17 +109,16 @@ public class TempSysController {
         ErrorUtil.isObjectNull(dto.getTempPicUrl(), "图文图片");
         ErrorUtil.isObjectNull(dto.getTempSource(), "图文来源");
         ErrorUtil.isObjectNull(dto.getTempTitle(), "图文标题");
-        ErrorUtil.isObjectNull(dto.getTempId(), "图文模板id");
-        //查询今天是否有模板
+        ErrorUtil.isObjectNull(dto.getPublishTime(), "发布日期");
+        //查询当天是否有模板
         List<Temp> targetTemps = iTempService.list(
                 new QueryWrapper<Temp>()
-                        .likeRight("create_time", LocalDate.now())
+                        .likeRight("publish_time", dto.getPublishTime())
         );
         if (targetTemps.size() > 0) {
-            log.error(LocalDate.now().toString() + "官方图文已经创建");
+            log.error(dto.getPublishTime().toString() + "官方图文已经创建");
             throw new ServiceException(TempCode.TODAY_TEMP_ALREADY_EXISTS);
         }
-
         //心语转为一句字符串,用"@#@"分隔
         Temp temp = new Temp();
         BeanUtils.copyProperties(dto, temp);
@@ -134,12 +132,12 @@ public class TempSysController {
         String substring = stringBuilder.substring(0, end);
         temp.setTempContent(substring);
 
+        //设置创建者
         Integer userId = UserIdHolder.get();
         log.info("openId:{}", userId);
         if (EptUtil.isEmpty(userId)) {
             throw new ServiceException("获取登录人id异常");
         }
-        //查询用户id
         SysUser sysUser = iSysUserService.getOne(
                 new QueryWrapper<SysUser>()
                         .eq(
@@ -147,15 +145,24 @@ public class TempSysController {
                                 userId
                         )
         );
-
         if (sysUser == null) {
             throw new ServiceException(TempCode.ADD_TEMP_FAILURE);
         }
         temp.setCreator(sysUser.getId());
-        LocalDateTime now = LocalDateTime.now();
-        temp.setCreateTime(now);
+
+        //默认为模板1
+        if(temp.getTempId()==null){
+
+            temp.setTempId(1);
+        }
+
+        //设置发布日期
+        ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate(dto.getPublishTime().toString()));
+        temp.setLunar(chineseDate.getChineseDay());
+
         //清空没用信息
         temp.setId(null);
+
         try {
             boolean save = iTempService.save(temp);
             if (save)
@@ -222,12 +229,23 @@ public class TempSysController {
         ErrorUtil.isObjectNull(id, "图文模板id");
         try {
             boolean b = iTempService.removeById(id);
-            if (b)
+            if (b){
                 return Result.ok();
+            }
             return Result.error(TempCode.DELETE_TEMP_FAILURE);
         } catch (Exception e) {
             log.error("异常:", e);
             throw new ServiceException(TempCode.DELETE_TEMP_FAILURE);
         }
+    }
+
+
+    private TempBean getTempBean(Temp i) {
+        String content = i.getTempContent();
+        String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
+        TempBean tempBean = TempBean.of();
+        BeanUtils.copyProperties(i, tempBean);
+        tempBean.setTempContent(Arrays.asList(split));
+        return tempBean;
     }
 }

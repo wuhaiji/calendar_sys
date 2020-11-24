@@ -58,12 +58,10 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
             throw new ServiceException(UserCode.NOT_LOGGED_IN);
         }
 
-        //接口限次数,同一个token不能频繁请求
-        // checkRequestFrequency(jwt, httpServletRequest.getServletPath());
 
         if (jwt.equals(adminProperties.getToken())) {
             //developer fixed token
-            WechatOpenIdHolder.set("oybhQ5Wo7bya3EVC8GebTFtj9NeY");
+            WechatOpenIdHolder.set("oybhQ5YmznFCQsWmr1TWv8v5eIY8");
             return true;
         }
 

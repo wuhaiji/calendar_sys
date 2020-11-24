@@ -1,7 +1,9 @@
 package com.yuntun.calendar_sys.controller.wechat;
 
 
+import cn.hutool.core.date.ChineseDate;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.date.chinese.LunarFestival;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,6 +15,7 @@ import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.interceptor.WechatOpenIdHolder;
 import com.yuntun.calendar_sys.model.bean.HeartWordsBean;
 import com.yuntun.calendar_sys.model.code.HeartWordsCode;
+import com.yuntun.calendar_sys.model.code.UserCode;
 import com.yuntun.calendar_sys.model.dto.HeartsWordsDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
@@ -53,6 +56,7 @@ public class HeartWordsController {
     @Autowired
     IUserService iUserService;
 
+
     /**
      * 首页用户心语列表
      *
@@ -72,20 +76,14 @@ public class HeartWordsController {
                 new QueryWrapper<HeartWords>()
                         //只给用户看见审核通过的心语
                         .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
-                        // .eq(openId != null, "user_open_id", openId)
+                        .eq(openId != null, "user_open_id", openId)
                         .orderByDesc("create_time")
         );
 
         List<HeartWords> records = heartWordsIPage.getRecords();
-        List<HeartWordsBean> heartWordsBeanList = records.parallelStream().map(i -> {
-            String content = i.getContent();
-            String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-            HeartWordsBean heartWordsBean = new HeartWordsBean();
-            BeanUtils.copyProperties(i, heartWordsBean);
-            heartWordsBean.setContentList(Arrays.asList(split));
-            return heartWordsBean;
-
-        }).collect(Collectors.toList());
+        List<HeartWordsBean> heartWordsBeanList = records.parallelStream()
+                .map(this::getHeartWordsBean)
+                .collect(Collectors.toList());
 
 
         RowData<HeartWordsBean> data = RowData.of(HeartWordsBean.class)
@@ -105,51 +103,55 @@ public class HeartWordsController {
 
         String openId = WechatOpenIdHolder.get();
 
-        LocalDateTime dateTimeStart = LocalDateTimeUtil.parse(dto.getDate());
+        LocalDateTime dateTimeStart;
+        try {
+            dateTimeStart = LocalDateTimeUtil.parse(dto.getDate());
+        } catch (Exception e) {
+            log.error("按日期查询30天心语->日期格式不正确:{}", dto.getDate(), e);
+            throw new ServiceException(HeartWordsCode.DATE_PARAM_ERROR);
+        }
 
         //查询前15条
-        List<HeartWords> heartWordsListPrev = iHeartWordsService.list(
-                new QueryWrapper<HeartWords>()
-                        //只给用户看见审核通过的心语
-                        .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
-                        .eq(openId != null, "user_open_id", openId)
-                        .orderByDesc("create_time")
-                        .ge("create_time", dateTimeStart)
-                        .last("limit 15")
+        List<HeartWords> heartWordsListPrev;
+        List<HeartWords> heartWordsListNext;
+        try {
+            heartWordsListPrev = iHeartWordsService.list(
+                    new QueryWrapper<HeartWords>()
+                            //只给用户看见审核通过的心语
+                            .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
+                            .eq(openId != null, "user_open_id", openId)
+                            .orderByDesc("create_time")
+                            .ge("create_time", dateTimeStart)
+                            .last("limit 15")
 
-        );
-        //查询后14条
-        List<HeartWords> heartWordsListNext = iHeartWordsService.list(
-                new QueryWrapper<HeartWords>()
-                        //只给用户看见审核通过的心语
-                        .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
-                        .eq(openId != null, "user_open_id", openId)
-                        .orderByDesc("create_time")
-                        .lt("create_time", dateTimeStart)
-                        .last("limit 14")
+            );
+            //查询后14条
+            heartWordsListNext = iHeartWordsService.list(
+                    new QueryWrapper<HeartWords>()
+                            //只给用户看见审核通过的心语
+                            .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
+                            .eq(openId != null, "user_open_id", openId)
+                            .orderByDesc("create_time")
+                            .lt("create_time", dateTimeStart)
+                            .last("limit 14")
 
-        );
+            );
+        } catch (Exception e) {
+            log.error("按日期查询30天心语->查询异常", e);
+            throw new ServiceException(HeartWordsCode.LIST_30_ERROR);
+        }
         ArrayList<HeartWords> heartWords = new ArrayList<>();
         heartWords.addAll(heartWordsListPrev);
         heartWords.addAll(heartWordsListNext);
         List<HeartWordsBean> collect = heartWords.parallelStream()
                 //过滤掉不属于当月的数据
                 .filter(i -> i.getCreateTime().getMonthValue() == (dateTimeStart.getMonthValue()))
-                .map(i -> {
-                    HeartWordsBean heartWordsBean = new HeartWordsBean();
-                    heartWordsBean.setId(i.getId());
-                    heartWordsBean.setImageUrl(i.getImageUrl());
-                    heartWordsBean.setCreateTime(i.getCreateTime());
-                    heartWordsBean.setDayOfMonth(i.getCreateTime().getDayOfMonth());
-                    BeanUtils.copyProperties(i, heartWordsBean);
-                    String content = i.getContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    heartWordsBean.setContentList(Arrays.asList(split));
-                    return heartWordsBean;
-                })
+                .map(this::getHeartWordsBean)
                 .collect(Collectors.toList());
         return Result.ok(collect);
     }
+
+
 
     @GetMapping("/list/months")
     public Result<RowData<JSONObject>> getHeartWordsListMonth(HeartsWordsDto dto) {
@@ -194,18 +196,7 @@ public class HeartWordsController {
 
         List<HeartWords> records = heartWordsIPage.getRecords();
         Map<Integer, List<HeartWordsBean>> collect = records.parallelStream()
-                .map(i -> {
-                    HeartWordsBean heartWordsBean = new HeartWordsBean();
-                    heartWordsBean.setId(i.getId());
-                    heartWordsBean.setImageUrl(i.getImageUrl());
-                    heartWordsBean.setCreateTime(i.getCreateTime());
-                    heartWordsBean.setDayOfMonth(i.getCreateTime().getDayOfMonth());
-                    BeanUtils.copyProperties(i, heartWordsBean);
-                    String content = i.getContent();
-                    String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
-                    heartWordsBean.setContentList(Arrays.asList(split));
-                    return heartWordsBean;
-                })
+                .map(this::getHeartWordsBean)
                 .collect(Collectors.groupingBy(i -> i.getCreateTime().getMonthValue()));
 
         List<JSONObject> list = collect.entrySet().parallelStream()
@@ -225,7 +216,18 @@ public class HeartWordsController {
         return Result.ok(data);
     }
 
-    public static void main(String[] args) {
+    @GetMapping("/detail/{id}")
+    public Result<Object> detail(@PathVariable("id") String id) {
+        ErrorUtil.isObjectNull(id, "参数");
+        try {
+            HeartWords heartWords = iHeartWordsService.getById(id);
+            if (EptUtil.isNotEmpty(getHeartWordsBean(heartWords)))
+                return Result.ok(heartWords);
+            return Result.error(HeartWordsCode.DETAIL_ERROR);
+        } catch (Exception e) {
+            log.error("异常:", e);
+            throw new ServiceException(UserCode.DETAIL_USER_FAILURE);
+        }
 
     }
 
@@ -236,25 +238,23 @@ public class HeartWordsController {
 
         ErrorUtil.isStringEmpty(dto.getPicUrl(), "心语内容图片");
         ErrorUtil.isStringEmpty(dto.getImageUrl(), "心语概览图");
-        ErrorUtil.isObjectNull(dto.getUserOpenId(), "用户id");
         ErrorUtil.isObjectNull(dto.getTempId(), "模板id");
         ErrorUtil.isListEmpty(content, "内容不能为空");
         ErrorUtil.isStringEmpty(dto.getSource(), "来源不能为空，用户自建的用用户的名称");
 
+        String openId = WechatOpenIdHolder.get();
 
         //心语转为一句字符串,用"@#@"分隔
         HeartWords heartWords = new HeartWords();
+        heartWords.setLunar(new ChineseDate(new Date()).getChineseDay());
         BeanUtils.copyProperties(dto, heartWords);
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String s : content) {
-            stringBuilder.append(s).append(HeartWordsConstant.CONTENT_DELIMITER);
-        }
-        String substring = stringBuilder.substring(0, stringBuilder.length() - HeartWordsConstant.CONTENT_DELIMITER.length());
-        heartWords.setContent(substring);
 
-        String openId = WechatOpenIdHolder.get();
+        String join = String.join(HeartWordsConstant.CONTENT_DELIMITER, content);
+        heartWords.setContent(join);
+
         log.info("openId:{}", openId);
         if (EptUtil.isEmpty(openId)) {
+            log.error("用户添加心语->获取openId异常");
             throw new ServiceException("获取openId异常");
         }
         //查询用户id
@@ -267,24 +267,17 @@ public class HeartWordsController {
         );
 
         if (user == null) {
+            log.error("用户添加心语->查询当前登录用户异常");
             throw new ServiceException(HeartWordsCode.ADD_ERROR);
         }
         heartWords.setCreator(user.getId());
-        LocalDateTime now = LocalDateTime.now();
-        System.out.println("心语创建时间:" + now);
-        heartWords.setCreateTime(now);
-
+        heartWords.setUserOpenId(openId);
         //保存
         try {
             boolean save = iHeartWordsService.save(heartWords);
             if (save) {
                 HeartWords byId = iHeartWordsService.getById(heartWords.getId());
-
-                HeartWordsBean heartWordsBean = new HeartWordsBean();
-                heartWordsBean.setId(byId.getId());
-                heartWordsBean.setCreateTime(byId.getCreateTime());
-                heartWordsBean.setImageUrl(byId.getImageUrl());
-                log.info("HeartWords:{}", byId);
+                HeartWordsBean heartWordsBean = getHeartWordsBean(byId);
                 return Result.ok(heartWordsBean);
             }
             throw new Exception();
@@ -303,5 +296,13 @@ public class HeartWordsController {
         return Result.error("删除失败");
     }
 
-
+    private HeartWordsBean getHeartWordsBean(HeartWords i) {
+        HeartWordsBean heartWordsBean = new HeartWordsBean();
+        heartWordsBean.setDayOfMonth(i.getCreateTime().getDayOfMonth());
+        BeanUtils.copyProperties(i, heartWordsBean);
+        String content = i.getContent();
+        String[] split = content.split(HeartWordsConstant.CONTENT_DELIMITER);
+        heartWordsBean.setContentList(Arrays.asList(split));
+        return heartWordsBean;
+    }
 }

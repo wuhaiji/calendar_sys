@@ -65,6 +65,12 @@ public class HeartWords implements Serializable{
     private Integer tempId;
 
     /**
+     * 农历（初几）
+     */
+    private String lunar;
+
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

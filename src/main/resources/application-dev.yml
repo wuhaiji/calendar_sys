@@ -48,9 +48,9 @@ mybatis-plus:
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
 gofastdfs:
   file:
-    path: http://192.168.0.108:8080/
+    path: http://192.168.0.108:8089/
     group: group1
-    host: http://192.168.0.108:8080
+    host: http://192.168.0.108:8089
 
 # 徐
 wechat:

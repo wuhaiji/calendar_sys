@@ -56,6 +56,11 @@ public class HeartWordsBean {
     private Integer tempId;
 
     /**
+     * 农历
+     */
+    private String lunar;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

@@ -1,9 +1,14 @@
 package com.yuntun.calendar_sys.model.bean;
 
+import com.yuntun.calendar_sys.constant.HeartWordsConstant;
+import com.yuntun.calendar_sys.entity.Temp;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,10 +50,20 @@ public class TempBean {
      */
     private LocalDateTime createTime;
 
+    private LocalDate publishTime;
 
+    /**
+     * 农历
+     */
+    private String lunar;
+
+    /**
+     * 模板id
+     */
     private Integer tempId;
 
     public static TempBean of() {
         return new TempBean();
     }
+
 }

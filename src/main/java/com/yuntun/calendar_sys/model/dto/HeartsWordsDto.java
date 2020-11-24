@@ -26,11 +26,6 @@ public class HeartsWordsDto  {
     Integer id;
 
     /**
-     * 信息创建用户id
-     */
-    private String userOpenId;
-
-    /**
      *  心语全图
      */
     private String imageUrl;

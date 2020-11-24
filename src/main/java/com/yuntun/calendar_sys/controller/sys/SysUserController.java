@@ -51,6 +51,7 @@ import static com.yuntun.calendar_sys.model.code.SysUserCode.LIST_SYSUSER_FAILUR
 public class SysUserController {
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
+    public static final int FIVE_MINUTE = 300;
 
     @Autowired
     ISysUserService iSysUserService;
@@ -140,7 +141,7 @@ public class SysUserController {
     }
 
     @PostMapping("/update")
-    public Result<Object> update(SysUserDto sysUserDto,String publickey) {
+    public Result<Object> update(SysUserDto sysUserDto, String publickey) {
 
         ErrorUtil.isObjectNull(sysUserDto.getId(), "角色id");
         ErrorUtil.isStringEmpty(publickey, "公钥");
@@ -163,7 +164,7 @@ public class SysUserController {
     }
 
     @PostMapping("/password/update")
-    public Result<Object> update(String username,String oldPassword,String newPassword,String publickey) {
+    public Result<Object> update(String username, String oldPassword, String newPassword, String publickey) {
 
         ErrorUtil.isStringEmpty(username, "用户名");
 
@@ -171,21 +172,21 @@ public class SysUserController {
 
         //先查询用户是否存在
         SysUser targetSysUser = iSysUserService.getOne(new QueryWrapper<SysUser>().eq("username", username));
-        if(targetSysUser==null){
+        if (targetSysUser == null) {
             log.error("用户不存在");
             throw new ServiceException(SysUserCode.LOGIN_FAILED_USERNAME_INCORRECT);
         }
 
         //判断旧密码是否正确
         String oldPasswordDecrypt = SecureUtil.md5(getPasswordDecrypt(oldPassword, publickey));
-        if(!targetSysUser.getPassword().equals(oldPasswordDecrypt)){
+        if (!targetSysUser.getPassword().equals(oldPasswordDecrypt)) {
             log.error("密码不正确");
             throw new ServiceException(SysUserCode.LOGIN_FAILED_PASSWORD_INCORRECT);
         }
 
         //解密新密码
         String newPasswordDecrypt = getPasswordDecrypt(newPassword, publickey);
-        ErrorUtil.isStringLengthOutOfRange(newPasswordDecrypt,6,16, "新密码");
+        ErrorUtil.isStringLengthOutOfRange(newPasswordDecrypt, 6, 16, "新密码");
         String newPasswordMd5 = SecureUtil.md5(newPasswordDecrypt);
         targetSysUser.setPassword(newPasswordMd5);
         try {
@@ -236,6 +237,7 @@ public class SysUserController {
             String password,
             String code,
             String publickey,
+            String captchaId,
             HttpSession session,
             HttpServletRequest request,
             HttpServletResponse response
@@ -247,7 +249,7 @@ public class SysUserController {
         ErrorUtil.isStringEmpty(username, "账号");
 
         //先验证图形验证码
-        String totalCode = (String) session.getAttribute(SysUserConstant.CAPTCHA_SESSION_KEY);
+        String totalCode = RedisUtils.getString(SysUserConstant.CAPTCHA_ID_REDIS_KEY + captchaId);
         if (totalCode == null || !new MathGenerator().verify(totalCode, code)) {
             return Result.error(SysUserCode.LOGIN_CAPTCHA_ERROR);
         }
@@ -370,8 +372,7 @@ public class SysUserController {
      * @return 图形验证码图片base64
      */
     @GetMapping("/captcha/base64")
-    public Result<String> captcha(HttpSession session) throws IOException {
-
+    public Result<Object> captcha(HttpSession session) throws IOException {
         CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(200, 100, 4, 20);
         // 自定义验证码内容为四则运算方式
         circleCaptcha.setGenerator(new MathGenerator(1));
@@ -381,7 +382,13 @@ public class SysUserController {
         log.info("code:{}", code);
         session.setAttribute(SysUserConstant.CAPTCHA_SESSION_KEY, code);
         String imageBase64 = circleCaptcha.getImageBase64();
-        return Result.ok(imageBase64);
+        String captchaId = JwtHelper.getRandomString(16);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("base64Img", imageBase64);
+        jsonObject.put("captchaId", captchaId);
+        //5分钟
+        RedisUtils.setValueTimeoutSeconds(SysUserConstant.CAPTCHA_ID_REDIS_KEY + captchaId, code, FIVE_MINUTE);
+        return Result.ok(jsonObject);
     }
 
     /**

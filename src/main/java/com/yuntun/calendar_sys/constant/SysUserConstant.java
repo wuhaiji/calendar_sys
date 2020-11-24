@@ -15,6 +15,11 @@ public interface SysUserConstant {
     String CAPTCHA_SESSION_KEY = "captcha";
 
     /**
+     * 图片验证码放在session中的key
+     */
+    String CAPTCHA_ID_REDIS_KEY = "hw_captcha:";
+
+    /**
      * 密匙对redis中的key
      */
     String RSA_KEYPAIR_REDIS_KEY = "hw_login_keypair:";

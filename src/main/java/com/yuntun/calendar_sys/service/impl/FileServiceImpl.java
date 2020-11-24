@@ -57,6 +57,7 @@ public class FileServiceImpl implements FileService {
             params.put("path", "/cl_mini_app/" + LocalDate.now().toString());
             params.put("output", "json2");
             String urlString = goFastDFSProperties.path + goFastDFSProperties.group + "/upload";
+            log.info("请求地址：{}",urlString);
             String resp = HttpUtil.post(urlString, params);
             JSONObject jsonObject = JSONObject.parseObject(resp);
             System.out.println(resp);

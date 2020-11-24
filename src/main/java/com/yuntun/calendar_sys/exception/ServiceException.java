@@ -52,9 +52,9 @@ public class ServiceException extends RuntimeException {
         this.msg = msg;
     }
 
-
-    @Override
-    public Throwable fillInStackTrace() {
-        return this;
-    }
+    //
+    // @Override
+    // public Throwable fillInStackTrace() {
+    //     return this;
+    // }
 }
