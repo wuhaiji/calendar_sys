@@ -1,6 +1,7 @@
 package com.yuntun.calendar_sys.controller.sys;
 
 
+import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,6 +14,8 @@ import com.yuntun.calendar_sys.model.dto.HeartsBatchWordsDto;
 import com.yuntun.calendar_sys.model.dto.HeartsWordsDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
+import com.yuntun.calendar_sys.properties.GoFastDFSProperties;
+import com.yuntun.calendar_sys.service.FileService;
 import com.yuntun.calendar_sys.service.IHeartWordsService;
 import com.yuntun.calendar_sys.util.EptUtil;
 import com.yuntun.calendar_sys.util.ErrorUtil;
@@ -40,9 +43,17 @@ public class HeartWordsSysController {
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());
 
+    public static final String DOWNLOAD_0 = "?download=0";
+
+    @Autowired
+    GoFastDFSProperties goFastDFSProperties;
 
     @Autowired
     IHeartWordsService iHeartWordsService;
+
+    @Autowired
+    FileService fileService;
+
 
     @GetMapping("/list")
     public Result<RowData<HeartWordsBean>> getHeartWordsList(Integer pageSize, Integer pageNo, HeartWords dto) {
@@ -118,16 +129,32 @@ public class HeartWordsSysController {
     @PostMapping("/delete/{id}")
     public Result<Object> delete(@PathVariable("id") Integer id) {
         ErrorUtil.isObjectNull(id, "信息id");
+        HeartWords heartWords = iHeartWordsService.getById(id);
+        if(heartWords==null){
+            throw new ServiceException(HeartWordsCode.NOT_EXISTS);
+        }
+
         boolean b;
         try {
             b = iHeartWordsService.removeById(id);
-            if (b) return Result.ok();
+            if (b){
+                //删除图片
+                fileService.goFastDFSDeleteFile(heartWords.getPicUrl());
+                fileService.goFastDFSDeleteFile(heartWords.getImageUrl());
+                return Result.ok();
+            }
             return Result.error("删除失败");
         } catch (Exception e) {
             log.error("Exception", e);
             throw new ServiceException(HeartWordsCode.DELETE_ERROR);
         }
+    }
 
+    public static void main(String[] args) {
+       String host= "https://file.venton.cn";
+        String picUrl = "https://file.venton.cn/group1/cl_mini_app/2020-11-18/5e9c87e2-d242-4151-a7f2-fade252e1c6d.jpg?download=0";
+        String substring = picUrl.substring(host.length(),picUrl.lastIndexOf(DOWNLOAD_0));
+        System.out.println(substring);
     }
 
     @PostMapping("/batch/update")

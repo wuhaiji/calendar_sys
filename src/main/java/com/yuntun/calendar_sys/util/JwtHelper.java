@@ -1,5 +1,6 @@
 package com.yuntun.calendar_sys.util;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.constant.JwtConstant;
@@ -34,6 +35,7 @@ public class JwtHelper {
     public static final String USER_ID = "userId";
     public static final String EXPIRE_TIME = "expireTime";
     public static final String SHA_256 = "SHA-256";
+    public static final long TEN_YEARS_MILL = 315_360_000_000L;
 
     /**
      * 生成JWT字符串 格式：A.B.C A-header头信息 B-payload 有效负荷 C-signature 签名信息
@@ -52,6 +54,51 @@ public class JwtHelper {
         long nowTimeMillis = System.currentTimeMillis();
         // 添加Token过期时间
         Date expDate = new Date(nowTimeMillis + JwtConstant.EXPIRE_Mill);
+        Date now = new Date(nowTimeMillis);
+        //生成密匙
+        // 将BASE64SECRET常量字符串使用base64解码成字节数组
+        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(BASE64SECRET);
+        // 使用HmacSHA256签名算法生成一个HS256的签名秘钥Key
+        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+        // 添加构成JWT的参数
+        Map<String, Object> headMap = new HashMap<>(2);
+        // Header { "alg": "HS256", "typ": "JWT" }
+        headMap.put("alg", SignatureAlgorithm.HS256.getValue());
+        headMap.put("typ", "JWT");
+        JwtBuilder builder = Jwts.builder().setHeader(headMap)
+                // Payload { "userId": "1234567890", "userName": "vic", }
+                // 加密后的客户编号
+                .claim(USER_ID, AESUtil.encryptToStr(userId, AES_SECRET))
+                // 客户名称
+                .claim(USER_NAME, userName)
+                // 客户端浏览器信息
+                .claim(USER_AGENT, identities[0])
+                // Signature
+                .signWith(signatureAlgorithm, signingKey)
+                //设置过期时间
+                .setExpiration(expDate)
+                .setNotBefore(now);
+        return builder.compact();
+    }
+
+    /**
+     * 生成JWT字符串 格式：A.B.C A-header头信息 B-payload 有效负荷 C-signature 签名信息
+     * 是将header和payload进行加密生成的
+     * (过期时间十年，长期有效)
+     *
+     * @param userId     用户编号
+     * @param userName   用户名
+     * @param identities 客户端信息（变长参数），目前包含浏览器信息，用于客户端拦截器校验，防止跨域非法访问
+     * @return
+     */
+    public static String generateJWT2(String userId, String userName, String... identities) {
+
+        // 签名算法，选择SHA-256
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+        // 获取当前系统时间
+        long nowTimeMillis = System.currentTimeMillis();
+        // 添加Token过期时间
+        Date expDate = new Date(nowTimeMillis + TEN_YEARS_MILL);
         Date now = new Date(nowTimeMillis);
         //生成密匙
         // 将BASE64SECRET常量字符串使用base64解码成字节数组
@@ -158,8 +205,9 @@ public class JwtHelper {
         // String string = Base64.getEncoder().encodeToString(randomString2.getBytes());
         // System.out.println(string);
 
-        String chrome = generateJWTCustomize("1", 30_000L, "chrome");
-        System.out.println(chrome);
+        // String chrome = generateJWTCustomize("1", 30_000L, "chrome");
+        // System.out.println(chrome);
+
     }
 
     /**

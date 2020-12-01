@@ -53,11 +53,16 @@ gofastdfs:
     host: http://192.168.0.108:8089
 
 # 徐
+#wechat:
+#  applets:
+#    appid: wxf8d116cbcc57e86c
+#    secret: a550c4503aaf60a8055e2f965494c3cb
+
+# 甲方
 wechat:
   applets:
-    appid: wxf8d116cbcc57e86c
-    secret: a550c4503aaf60a8055e2f965494c3cb
-
+    appid: wx9d940a9ae70ba545
+    secret: 23ff4a752eb1e15c4b18570e7aab6d4f
 
 ## 胡
 #wechat:

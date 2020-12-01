@@ -43,6 +43,7 @@ public class webMvcConfig implements WebMvcConfigurer {
         SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/captcha/**");
         SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/login");
         SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/publickey");
+        SYS_LOGIN_WHITE_LIST.add("/sys/sysuser/logout");
         //不拦截小程序端的接口
         SYS_LOGIN_WHITE_LIST.add("/wechat/**");
         SYS_LOGIN_WHITE_LIST.add("/error/**");
@@ -83,7 +84,7 @@ public class webMvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("*")
-                .allowedMethods("POST", "GET", "PUT", "OPTIONS", "DELETE")
+                .allowedMethods("POST", "GET")
                 .maxAge(3600)
                 .allowCredentials(true);
     }

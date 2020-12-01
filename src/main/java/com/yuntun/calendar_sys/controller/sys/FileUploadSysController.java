@@ -2,7 +2,6 @@ package com.yuntun.calendar_sys.controller.sys;
 
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.model.response.Result;
-import com.yuntun.calendar_sys.properties.GoFastDFSProperties;
 import com.yuntun.calendar_sys.service.FileService;
 import com.yuntun.calendar_sys.util.Base64DecodeMultipartFile;
 import org.slf4j.Logger;

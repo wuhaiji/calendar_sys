@@ -78,7 +78,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //校验返回值
         if (EptUtil.isEmpty(sessionKey) || EptUtil.isEmpty(openId)) {
             log.error("微信平台报错：{}", wechatLoginBean.getErrmsg());
-            throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
+            // throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
+            throw new ServiceException("20206",String.valueOf(wechatLoginBean.getErrcode()));
         }
 
         WechatLoginDto.UserInfo userInfo = loginRequest.getUserInfo();
@@ -104,7 +105,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String wechatToken;
         try {
             String userAgent = ServletUtil.getRequest().getHeader(JwtConstant.USER_AGENT_HEADER_KEY);
-            wechatToken = JwtHelper.generateJWT(openId, insertOrUpdateUser.getNickname(), userAgent);
+            wechatToken = JwtHelper.generateJWT2(openId, insertOrUpdateUser.getNickname(), userAgent);
         } catch (Exception e) {
             log.error("生成小程序端token异常:", e);
             throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
@@ -123,7 +124,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         BeanUtils.copyProperties(insertOrUpdateUser, userBean);
         //设置token
         userBean.setToken(wechatToken);
-        RedisUtils.setValueTimeoutSeconds("wechat_token:" + userBean.getOpenId(), wechatToken, 3600);
+        RedisUtils.setValue("wechat_token:" + userBean.getOpenId(), wechatToken);
         return userBean;
     }
 

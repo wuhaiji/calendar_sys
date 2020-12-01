@@ -18,7 +18,8 @@ public enum HeartWordsCode implements ResultCode {
 
     UPDATE_BATCH_ERROR("20506", "分页查询心语列表异常"),
     DATE_PARAM_ERROR("20507", "日期格式不正确"),
-    LIST_30_ERROR("20507", "按日期查询30条心语异常"),
+    LIST_30_ERROR("20508", "按日期查询30条心语异常"),
+    NOT_EXISTS("20509", "心语不存在"),
     ;
     /**
      * 错误码

@@ -310,11 +310,9 @@ public class SysUserController {
     @PostMapping("/logout")
     public Result<Object> logout(HttpServletRequest request) {
         String jwtToken = request.getHeader(JWT_TOKEN_HEADER_KEY);
-        if (EptUtil.isEmpty(jwtToken)) {
-            log.warn("退出登陆时，未找到用户token");
-            return Result.error(SysUserCode.LOGIN_OUT_ERROR);
+        if(!EptUtil.isEmpty(jwtToken)){
+            RedisUtils.delKey(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken));
         }
-        RedisUtils.delKey(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken));
         return Result.ok();
     }
 
@@ -332,7 +330,7 @@ public class SysUserController {
         String publicKey = map.get(RSAUtils.PUBLIC_KEY_STR);
         String privateKey = map.get(RSAUtils.PRIVATE_KEY_STR);
         //5分钟过期
-        RedisUtils.setValueTimeoutSeconds(RSA_KEYPAIR_REDIS_KEY + SecureUtil.md5(publicKey), privateKey, 300_000);
+        RedisUtils.setValueTimeoutSeconds(RSA_KEYPAIR_REDIS_KEY + SecureUtil.md5(publicKey), privateKey, 300);
         return Result.ok(publicKey);
     }
 

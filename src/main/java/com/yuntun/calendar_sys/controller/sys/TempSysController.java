@@ -4,7 +4,6 @@ package com.yuntun.calendar_sys.controller.sys;
 import cn.hutool.core.date.ChineseDate;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.date.chinese.LunarFestival;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,12 +13,11 @@ import com.yuntun.calendar_sys.entity.Temp;
 import com.yuntun.calendar_sys.exception.ServiceException;
 import com.yuntun.calendar_sys.interceptor.UserIdHolder;
 import com.yuntun.calendar_sys.model.bean.TempBean;
-import com.yuntun.calendar_sys.model.code.HeartWordsCode;
 import com.yuntun.calendar_sys.model.code.TempCode;
-import com.yuntun.calendar_sys.model.code.UserCode;
 import com.yuntun.calendar_sys.model.dto.TempDto;
 import com.yuntun.calendar_sys.model.response.Result;
 import com.yuntun.calendar_sys.model.response.RowData;
+import com.yuntun.calendar_sys.service.FileService;
 import com.yuntun.calendar_sys.service.ISysUserService;
 import com.yuntun.calendar_sys.service.ITempService;
 import com.yuntun.calendar_sys.util.EptUtil;
@@ -31,8 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,6 +52,9 @@ public class TempSysController {
 
     @Autowired
     ISysUserService iSysUserService;
+
+    @Autowired
+    FileService fileService;
 
     @GetMapping("/list")
     public Result<Object> getList(Integer pageSize, Integer pageNo, TempDto dto) {
@@ -90,7 +89,7 @@ public class TempSysController {
         ErrorUtil.isObjectNull(id, "参数");
         try {
             Temp temp = iTempService.getById(id);
-            if (EptUtil.isNotEmpty(temp)){
+            if (EptUtil.isNotEmpty(temp)) {
                 TempBean tempBean = getTempBean(temp);
                 return Result.ok(tempBean);
             }
@@ -151,7 +150,7 @@ public class TempSysController {
         temp.setCreator(sysUser.getId());
 
         //默认为模板1
-        if(temp.getTempId()==null){
+        if (temp.getTempId() == null) {
 
             temp.setTempId(1);
         }
@@ -227,9 +226,17 @@ public class TempSysController {
     @PostMapping("/delete/{id}")
     public Result<Object> delete(@PathVariable("id") Integer id) {
         ErrorUtil.isObjectNull(id, "图文模板id");
+
+        //查询是否存在
+        Temp temp = iTempService.getById(id);
+        if (temp == null) {
+            throw new ServiceException(TempCode.DETAIL_TEMP_ID_DOES_NOT_EXIST);
+        }
         try {
             boolean b = iTempService.removeById(id);
-            if (b){
+
+            if (b) {
+                fileService.goFastDFSDeleteFile(temp.getTempPicUrl());
                 return Result.ok();
             }
             return Result.error(TempCode.DELETE_TEMP_FAILURE);

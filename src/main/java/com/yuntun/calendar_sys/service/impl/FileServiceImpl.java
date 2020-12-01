@@ -74,8 +74,28 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+    // @Override
+    // public void goFastDFSDeleteFile(String path) {
+    //     Map<String, Object> params = new HashMap<>(6);
+    //     params.put("path", path);
+    //     String res = null;
+    //     try {
+    //         res = HttpUtil.post(goFastDFSProperties.path + goFastDFSProperties.group + "/delete", params);
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         log.error("文件删除异常");
+    //     }
+    //     log.info("resp:{}",res);
+    //     JSONObject jsonObject = JSONObject.parseObject(res);
+    //     if (!"ok".equals(jsonObject.getString("status"))) {
+    //         log.error("goFastDFS 文件删除异常");
+    //         throw new ServiceException(FileCode.FILE_DELETE_ERROR);
+    //     }
+    // }
     @Override
-    public void goFastDFSDeleteFile(String path) {
+    public void goFastDFSDeleteFile(String url) {
+        String path = url.substring(goFastDFSProperties.getHost().length(), url.lastIndexOf(FileConstant.DOWNLOAD_0));
+        log.info("path");
         Map<String, Object> params = new HashMap<>(6);
         params.put("path", path);
         String res = null;
@@ -84,9 +104,16 @@ public class FileServiceImpl implements FileService {
         } catch (Exception e) {
             e.printStackTrace();
             log.error("文件删除异常");
+            throw new RuntimeException();
         }
         log.info("resp:{}",res);
-        JSONObject jsonObject = JSONObject.parseObject(res);
+
+        JSONObject jsonObject;
+        try {
+            jsonObject = JSONObject.parseObject(res);
+        } catch (Exception e) {
+            throw new ServiceException(FileCode.FILE_DELETE_ERROR);
+        }
         if (!"ok".equals(jsonObject.getString("status"))) {
             log.error("goFastDFS 文件删除异常");
             throw new ServiceException(FileCode.FILE_DELETE_ERROR);

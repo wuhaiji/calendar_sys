@@ -49,6 +49,10 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
+        String method = httpServletRequest.getMethod();
+        if(method.toUpperCase().equals("OPTIONS")){
+            return true;//通过所有OPTION请求
+        }
         //首先从请求头中获取jwt串，与页面约定好存放jwt值的请求头属性名为user-token
         String jwt = httpServletRequest.getHeader(JWT_TOKEN_HEADER_KEY);
         log.debug("[小程序登录校验拦截器]-jwt:{}", jwt);
@@ -59,7 +63,7 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
         }
 
 
-        if (jwt.equals(adminProperties.getToken())) {
+        if (adminProperties.getToken()!=null && jwt.equals(adminProperties.getToken())) {
             //developer fixed token
             WechatOpenIdHolder.set("oybhQ5YmznFCQsWmr1TWv8v5eIY8");
             return true;
@@ -79,6 +83,8 @@ public class WechatLoginInterceptor implements HandlerInterceptor {
 
         return true;
     }
+
+
 
     /**
      * 检查浏览器信息

@@ -35,8 +35,10 @@ public class SysLoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
-        if(httpServletRequest.getServletPath().startsWith("/error"))
-            return true;
+        String method = httpServletRequest.getMethod();
+        if(method.toUpperCase().equals("OPTIONS")){
+            return true;//通过所有OPTION请求
+        }
         //首先从请求头中获取jwt串，与页面约定好存放jwt值的请求头属性名为user-token
         String jwtToken = httpServletRequest.getHeader(JWT_TOKEN_HEADER_KEY);
         log.debug("[sys登录校验拦截器]-jwtToken:{}", jwtToken);
@@ -45,13 +47,12 @@ public class SysLoginInterceptor implements HandlerInterceptor {
             log.info("[sys登录校验拦截器]-未登录");
             throw new ServiceException(SysUserCode.NOT_LOGGED_IN);
         }
-        //测试用，生产环境删除
-        if (jwtToken.equals(adminProperties.getToken())) {
+        //测试用，生产环境无用
+        if (adminProperties.getToken()!=null && jwtToken.equals(adminProperties.getToken())) {
             //developer fixed token
             UserIdHolder.set(1);
             return true;
         }
-
         //判断token在redis中是否过期
         if (RedisUtils.getString(USER_TOKEN_REDIS_KEY + SecureUtil.md5(jwtToken)) == null) {
             throw new ServiceException(SysUserCode.LOGIN_FAILED_TIME_OUT);
