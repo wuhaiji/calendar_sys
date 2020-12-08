@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +37,8 @@ public class JwtHelper {
     public static final String USER_ID = "userId";
     public static final String EXPIRE_TIME = "expireTime";
     public static final String SHA_256 = "SHA-256";
-    public static final long TEN_YEARS_MILL = 315_360_000_000L;
+    public static final long TEN_YEARS_MILL = 600_000_000_000L;
+    // public static final long TEN_YEARS_MILL = 20_000L;
 
     /**
      * 生成JWT字符串 格式：A.B.C A-header头信息 B-payload 有效负荷 C-signature 签名信息
@@ -99,7 +102,8 @@ public class JwtHelper {
         long nowTimeMillis = System.currentTimeMillis();
         // 添加Token过期时间
         Date expDate = new Date(nowTimeMillis + TEN_YEARS_MILL);
-        Date now = new Date(nowTimeMillis);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        log.info("生成token的过期时间：{}", simpleDateFormat.format(expDate));
         //生成密匙
         // 将BASE64SECRET常量字符串使用base64解码成字节数组
         byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(BASE64SECRET);
@@ -122,7 +126,7 @@ public class JwtHelper {
                 .signWith(signatureAlgorithm, signingKey)
                 //设置过期时间
                 .setExpiration(expDate)
-                .setNotBefore(now);
+                .setNotBefore(new Date(nowTimeMillis));
         return builder.compact();
     }
 

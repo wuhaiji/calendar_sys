@@ -64,7 +64,7 @@ public class TempController {
                             .setCurrent(pageNo),
                     new QueryWrapper<Temp>()
                             .le("publish_time", LocalDate.now())
-                            .orderByDesc("create_time")
+                            .orderByDesc("publish_time")
             );
         } catch (Exception e) {
             log.error("查询官方图文模板列表失败");
@@ -91,7 +91,8 @@ public class TempController {
 
         QueryWrapper<Temp> queryWrapper = new QueryWrapper<Temp>()
                 .le("publish_time", LocalDate.now())
-                .orderByDesc("create_time");
+                .orderByDesc("publish_time")
+                ;
 
         //指定月份
         if (EptUtil.isNotEmpty(date)) {
@@ -103,8 +104,8 @@ public class TempController {
             LocalDateTime end = dateTimeEnd.with(TemporalAdjusters.firstDayOfMonth());
 
             queryWrapper
-                    .ge("create_time", start.toLocalDate())
-                    .lt("create_time", end.toLocalDate())
+                    .ge("publish_time", start.toLocalDate())
+                    .lt("publish_time", end.toLocalDate())
             ;
         }
 
@@ -136,6 +137,7 @@ public class TempController {
                 .setRows(list)
                 .setTotal(tempIPage.getTotal())
                 .setTotalPages(tempIPage.getTotal());
+        log.info("返回的官方图文月份列表：{}",list);
         return Result.ok(data);
     }
 
@@ -152,8 +154,8 @@ public class TempController {
         //查询前15条
         List<Temp> TempListPrev = iTempService.list(
                 new QueryWrapper<Temp>()
-                        .orderByDesc("create_time")
-                        .ge("create_time", dateTimeStart)
+                        .orderByDesc("publish_time")
+                        .ge("publish_time", dateTimeStart)
                         .le("publish_time", LocalDate.now())
                         .last("limit 15")
 
@@ -161,8 +163,8 @@ public class TempController {
         //查询后14条
         List<Temp> TempListNext = iTempService.list(
                 new QueryWrapper<Temp>()
-                        .orderByDesc("create_time")
-                        .lt("create_time", dateTimeStart)
+                        .orderByDesc("publish_time")
+                        .lt("publish_time", dateTimeStart)
                         .le("publish_time", LocalDate.now())
                         .last("limit 14")
 

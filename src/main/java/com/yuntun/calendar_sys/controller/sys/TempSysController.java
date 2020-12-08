@@ -67,12 +67,12 @@ public class TempSysController {
                         .setSize(pageSize)
                         .setCurrent(pageNo),
                 new QueryWrapper<Temp>()
-                        .orderByDesc("create_time")
+                        .orderByDesc("publish_time")
         );
 
         List<TempBean> tempBeanList = tempPage.getRecords()
                 .parallelStream()
-                .map(i -> getTempBean(i)).collect(Collectors.toList());
+                .map(this::getTempBean).collect(Collectors.toList());
 
         RowData<TempBean> data = RowData.of(TempBean.class)
                 .setRows(tempBeanList)
