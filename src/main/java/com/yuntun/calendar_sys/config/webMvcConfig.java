@@ -57,6 +57,7 @@ public class webMvcConfig implements WebMvcConfigurer {
         SYS_LOGIN_WHITE_LIST.add("/error/**");
         //不拦截open请求
         WECHAT_LOGIN_WHITE_LIST.add("/open/**");
+        WECHAT_LOGIN_WHITE_LIST.add("/wechat/open/**");
     }
 
     @Override

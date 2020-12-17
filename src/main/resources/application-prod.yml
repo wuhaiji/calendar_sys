@@ -54,8 +54,10 @@ mybatis-plus:
 
 gofastdfs:
   file:
-    path: http://file.16273849510.com:8080/
+    # 文件操作地址
+    path: http://file.16273849510.com:80/
     group: group1
+    # 文件访问地址
     host: https://file.16273849510.com
 
 

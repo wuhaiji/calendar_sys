@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @since 2020-11-05
  */
 @RestController
-@RequestMapping("/wechat/temp")
+@RequestMapping("/wechat/open/temp")
 public class TempController {
 
     private static final Logger log = LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[1].getClassName());

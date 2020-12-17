@@ -79,7 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (EptUtil.isEmpty(sessionKey) || EptUtil.isEmpty(openId)) {
             log.error("微信平台报错：{}", wechatLoginBean.getErrmsg());
             // throw new ServiceException(UserCode.WECHAT_USER_LOGIN_ERROR);
-            throw new ServiceException("20206",String.valueOf(wechatLoginBean.getErrcode()));
+            throw new ServiceException("20206",String.valueOf(wechatLoginBean.getErrmsg()));
         }
 
         WechatLoginDto.UserInfo userInfo = loginRequest.getUserInfo();
