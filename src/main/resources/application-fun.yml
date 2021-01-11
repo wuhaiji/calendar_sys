@@ -1,0 +1,76 @@
+server:
+  port: 30000
+  undertow:
+    max-http-post-size: 50MB
+#  servlet:
+#    context-path: /calendar-sys
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 51MB
+      enabled: true
+      # 设置文件缓存的临界点,超过则先保存到临时目录,默认为0,所有文件都会进行缓存
+      file-size-threshold: 0
+  application:
+    name: calendar_sys
+  jackson:
+    # springboot响应json null值过滤
+    default-property-inclusion: non_null
+  # 数据库
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://192.168.0.108:3306/cl_mini_app?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 3
+      max-active: 10
+      max-wait: 50000
+      keep-alive-between-time-millis: 50000
+      keep-alive: false
+  redis:
+    database: 0
+    host: 192.168.0.108
+    port: 6379
+    timeout: 5000
+    password:
+
+# sql 打印
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted  # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+gofastdfs:
+  file:
+    path: http://192.168.0.108:8089/
+    group: group1
+    host: http://192.168.0.108:8089
+
+# 徐
+#wechat:
+#  applets:
+#    appid: wxf8d116cbcc57e86c
+#    secret: a550c4503aaf60a8055e2f965494c3cb
+
+# 甲方
+wechat:
+  applets:
+    appid: wx9d940a9ae70ba545
+    secret: 23ff4a752eb1e15c4b18570e7aab6d4f
+
+## 胡
+#wechat:
+#  applets:
+#    appid: wx6c889de5602cdf0c
+#    secret: 78907705f67f4a6632a2f471f303114a
+
+
+# 超级管理token
+admin:
+  token: whj

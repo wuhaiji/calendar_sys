@@ -1,6 +1,7 @@
 package com.yuntun.calendar_sys.service.impl;
 
 import cn.hutool.core.io.resource.InputStreamResource;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.yuntun.calendar_sys.constant.FileConstant;
@@ -64,7 +65,7 @@ public class FileServiceImpl implements FileService {
             String path = jsonObject.getJSONObject("data").getString("path");
             //path存起来，用于以后清除无用文件
             RedisUtils.listPush("gofastdfs_file_path", path);
-            String src = goFastDFSProperties.getHost() + path+ FileConstant.DOWNLOAD_0;
+            String src = goFastDFSProperties.getPath() + path+ FileConstant.DOWNLOAD_0;
             log.info("src:{}",src);
             return src;
 

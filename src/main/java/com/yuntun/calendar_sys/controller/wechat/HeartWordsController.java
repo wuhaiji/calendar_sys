@@ -207,7 +207,9 @@ public class HeartWordsController {
                     return jsonObject;
                 }).collect(Collectors.toList());
 
-        Collections.reverse(list);
+        list = list.stream().sorted(
+                (o1, o2) -> o2.getInteger("month") < (o1.getInteger("month")) ? 1 : -1
+        ).collect(Collectors.toList());
 
         RowData<JSONObject> data = RowData.of(JSONObject.class)
                 .setRows(list)
