@@ -111,31 +111,36 @@ public class HeartWordsController {
             throw new ServiceException(HeartWordsCode.DATE_PARAM_ERROR);
         }
 
-        //查询前15条
+
         List<HeartWords> heartWordsListPrev;
         List<HeartWords> heartWordsListNext;
         try {
+
+            //查询前14条
             heartWordsListPrev = iHeartWordsService.list(
                     new QueryWrapper<HeartWords>()
                             //只给用户看见审核通过的心语
                             .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
                             .eq(openId != null, "user_open_id", openId)
-                            .orderByDesc("create_time")
-                            .ge("create_time", dateTimeStart)
-                            .last("limit 15")
+                            .orderByAsc("create_time")
+                            .lt("create_time", dateTimeStart)
+                            .last("limit 14")
 
             );
-            //查询后14条
+
+            //查询后15条
             heartWordsListNext = iHeartWordsService.list(
                     new QueryWrapper<HeartWords>()
                             //只给用户看见审核通过的心语
                             .eq("disable", HeartWordsConstant.EXAMINATION_PASSED)
                             .eq(openId != null, "user_open_id", openId)
-                            .orderByDesc("create_time")
-                            .lt("create_time", dateTimeStart)
-                            .last("limit 14")
+                            .orderByAsc("create_time")
+                            .ge("create_time", dateTimeStart)
+                            .last("limit 15")
 
             );
+
+
         } catch (Exception e) {
             log.error("按日期查询30天心语->查询异常", e);
             throw new ServiceException(HeartWordsCode.LIST_30_ERROR);
@@ -143,6 +148,8 @@ public class HeartWordsController {
         ArrayList<HeartWords> heartWords = new ArrayList<>();
         heartWords.addAll(heartWordsListPrev);
         heartWords.addAll(heartWordsListNext);
+        Collections.reverse(heartWords);
+
         List<HeartWordsBean> collect = heartWords.parallelStream()
                 //过滤掉不属于当月的数据
                 .filter(i -> i.getCreateTime().getMonthValue() == (dateTimeStart.getMonthValue()))

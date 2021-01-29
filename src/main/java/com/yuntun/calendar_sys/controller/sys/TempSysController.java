@@ -205,7 +205,27 @@ public class TempSysController {
     @PostMapping("/update")
     public Result<Object> update(TempDto dto) {
 
+
         ErrorUtil.isObjectNull(dto.getId(), "图文模板id");
+        Temp byId = iTempService.getById(dto.getId());
+        if(byId==null){
+            throw new ServiceException(TempCode.DETAIL_TEMP_ID_DOES_NOT_EXIST);
+        }
+        //查询当天是否有模板
+        if (dto.getPublishTime() != null) {
+            if(!byId.getPublishTime().equals(dto.getPublishTime())){
+                List<Temp> targetTemps = iTempService.list(
+                        new QueryWrapper<Temp>()
+                                .likeRight("publish_time", dto.getPublishTime())
+                );
+                if (targetTemps.size() > 1) {
+                    log.error(dto.getPublishTime().toString() + "当天的官方图文已经创建");
+                    throw new ServiceException(TempCode.TODAY_TEMP_ALREADY_EXISTS);
+                }
+            }
+
+        }
+
         Temp temp = new Temp();
         BeanUtils.copyProperties(dto, temp);
         List<String> content = dto.getTempContent();
