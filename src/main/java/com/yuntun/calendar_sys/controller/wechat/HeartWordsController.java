@@ -209,13 +209,26 @@ public class HeartWordsController {
         List<JSONObject> list = collect.entrySet().parallelStream()
                 .map(i -> {
                     JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("rows", i.getValue());
+                    List<HeartWordsBean> heartWordsBeans = i.getValue();
+                    jsonObject.put("rows", heartWordsBeans);
                     jsonObject.put("month", i.getKey());
+                    jsonObject.put("year", heartWordsBeans.get(0).getCreateTime().getYear());
                     return jsonObject;
                 }).collect(Collectors.toList());
 
-        list = list.stream().sorted(
-                (o1, o2) -> o2.getInteger("month") < (o1.getInteger("month")) ? 1 : -1
+        list = list.stream().sorted((o1, o2) -> {
+                    if (o1.getInteger("year") > (o2.getInteger("year"))) {
+                        return -1;
+                    } else if(o1.getInteger("year").equals(o2.getInteger("year"))) {
+                        if (o1.getInteger("month") > (o2.getInteger("month"))) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
+                    }else{
+                        return 1;
+                    }
+                }
         ).collect(Collectors.toList());
 
         RowData<JSONObject> data = RowData.of(JSONObject.class)
